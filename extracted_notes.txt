@@ -1,0 +1,469 @@
+
+CH1
+記憶體階層圖會考 抓掉兩項填寫 所以要背 投影片22
+multiprograming 重要之重
+考試問甚麼是long term mid term short term
+ch3甘特圖一定考  waiting time很重要
+
+第一章 完整章節與子單元重點地圖
+一、 作業系統的作用（What Operating Systems Do）
+系統定義與三大目標：作業系統（OS）是介於電腦使用者與硬體之間的中介程式。其核心目標為：執行使用者程式並讓問題更易解決、使電腦系統方便易用，以及高效率地利用硬體資源。
+電腦系統四大組成元件：
+硬體（Hardware）：提供基本計算資源（CPU、記憶體、I/O 裝置）。
+作業系統（Operating System）：控制並協調硬體資源在各應用程式與使用者之間的運用。
+應用程式（Application Programs）：定義如何運用系統資源來解決使用者的計算問題（如文書處理器、編譯器、網路瀏覽器、資料庫系統、遊戲等）。
+使用者（Users）：包含人類、其他機器或電腦。
+使用者觀點 vs. 電腦觀點：
+使用者觀點（User View）：使用者追求便利與易用性，通常不關注資源利用率；伺服器等共享系統需滿足所有使用者；工作站擁有專屬資源但常使用伺服器共享資源；手持裝置受限於資源，著重於可用性與電池壽命。
+電腦觀點（Computer View）：OS 是資源分配者（Resource Allocator），管理所有資源並對衝突的請求做出高效且公平的決定；同時也是控制程式（Control Program），控制程式執行以防止錯誤及不當使用。
+核心與開機流程：
+核心（Kernel）：電腦上唯一時刻都在執行的程式即為核心。其餘程式則劃分為系統程式（隨 OS 隨附）或應用程式。
+引導程式（Bootstrap Program）：開機或重啟時載入，通常儲存於 ROM 或 EPROM 中，稱為 BIOS（韌體 Firmware）。負責初始化系統的所有硬體環節，隨後載入 OS 核心並開始執行。
+
+二、 電腦系統組織（Computer-System Organization）
+系統架構與併行運作：由一個或多個 CPU 以及多個裝置控制器透過公共匯流排（Common Bus）連接共享記憶體；CPU 與各裝置控制器可併行執行並競爭記憶體週期。
+I/O 運作與中斷機制：
+緩衝區傳輸：各裝置控制器負責特定類型的裝置並設有區域緩衝區（Local Buffer）。CPU 在主記憶體與區域緩衝區之間搬移資料，I/O 操作則在裝置與緩衝區之間進行。
+中斷通知（Interrupt）：裝置控制器在完成操作時會引發中斷通知 CPU。OS 會儲存暫存器與程式計數器（PC）以保留 CPU 狀態，並透過**輪詢（Polling）或向量中斷（Vectored Interrupt）**機制判定中斷類型並跳轉至對應區段程式碼處理。
+直接記憶體存取（DMA）：
+專為傳輸速度接近主記憶體的高速 I/O 裝置設計。
+裝置控制器能直接將資料區塊（Blocks）從緩衝區轉移至主記憶體，完全不需要 CPU 介入。
+顯著降低中斷頻率：改為每傳輸一個完整的資料區塊才產生一次中斷（而非每傳輸 1 個 Byte 就產生一次中斷）。
+儲存結構（Storage Structure）：
+主記憶體（Main Memory）：CPU 唯一能直接存取的大型儲存媒介，支援隨機存取（Random Access），通常屬於**揮發性（Volatile）**記憶體。
+次級儲存（Secondary Storage）：主記憶體的延伸，提供大容量的**非揮發性（Nonvolatile）**儲存空間。
+磁碟（Magnetic Disks）：表面邏輯上劃分為磁軌（Tracks）與磁扇區（Sectors），包含磁碟片、讀寫磁頭、磁碟臂與磁柱等結構，由磁碟控制器處理邏輯互動。
+固態硬碟（SSD）：速度比傳統磁碟快且同為非揮發性，應用普及度持續上升。
+儲存階層與快取（Storage Hierarchy & Caching）：
+三大劃分指標：速度（Speed）、成本（Cost）與揮發性（Volatility）。
+裝置驅動程式（Device Driver）：為裝置控制器提供統一介面，建立控制器與 OS 核心之間的溝通管道。
+儲存階層金字塔（由頂端至底端：速度由快至慢、成本由高至低、容量由小至大）：
+Registers（暫存器）
+Cache（快取記憶體）
+Main memory（主記憶體）
+Solid-state disk（固態硬碟）
+Magnetic disk（傳統磁碟）
+Optical disk（光碟）
+Magnetic tapes（磁帶）
+快取（Caching）原理：在硬體、OS 與軟體層級皆為重要原則。將暫時頻繁使用的資料從較慢儲存區複製至較快的快取區。存取時先檢查快取，若存在則直接讀取；若不存在則先複製到快取再使用。快取大小與**替換策略（Replacement Policy）**是系統設計的核心議題。
+
+三、 電腦系統架構（Computer-System Architecture）
+多處理器系統（Multiprocessor Systems）：又稱為平行系統（Parallel Systems）或緊密耦合系統（Tightly-Coupled Systems），應用與重要性持續成長。
+三大優點：
+提高吞吐量（Increased Throughput）：增加處理器可在更短時間完成更多工作。
+規模經濟（Economy of Scale）：共享週邊、儲存與電源，成本低於建立多台獨立單處理器電腦。
+提高可靠性（Increased Reliability）：具備**優雅降級（Graceful Degradation）與容錯（Fault Tolerance）**能力，單一處理器故障系統仍可繼續運作。
+兩大類型：非對稱多處理（Asymmetric Multiprocessing）與對稱多處理（Symmetric Multiprocessing, SMP）。
+對稱多處理（SMP）與雙核心架構：
+SMP 架構：每個 CPU 各自擁有專屬暫存器與快取，並透過公共匯流排共同存取共享的主記憶體。
+雙核心設計（Dual-Core Design）：單一晶片內包含兩個 CPU 核心（Core 0, Core 1），各自擁有暫存器與快取並共享主記憶體。
+記憶體架構變體：
+UMA（Uniform Memory Access）：所有 CPU 存取記憶體的時間均相同。
+NUMA（Non-Uniform Memory Access）：CPU 存取距離較近的記憶體較快，存取其他模組時間較長。
+刀鋒伺服器（Blade Servers）：單一機箱（Chassis）內包含多個獨立運作的電腦系統。
+叢集系統（Clustered Systems）：
+定義與架構：由多個獨立電腦系統結合共同工作，通常透過**儲存區域網路（SAN）**共享儲存設備，提供高可用性（High-Availability）服務。
+叢集模式：
+非對稱叢集（Asymmetric Clustering）：有一台機器處於熱備援模式（Hot-Standby Mode），僅監控主伺服器，故障時才接手。
+對稱叢集（Symmetric Clustering）：多個節點同時執行應用程式並互相監視。
+高效能計算（HPC）與 DLM：用於高效能計算的應用程式必須針對平行化（Parallelization）撰寫；系統採用**分散式鎖定管理員（DLM）**以避免節點間的存取衝突。
+四、 作業系統結構（Operating-System Structure）
+多道程式設計（Multiprogramming）：單一使用者無法讓 CPU 與 I/O 裝置隨時保持忙碌，因此系統需將作業（程式與資料）組織起來，使 CPU 總有一項作業可執行。系統會將部分作業保留於記憶體中，透過**作業排程（Job Scheduling）**選擇作業執行；當目前作業需要等待（如 I/O）時，OS 會迅速切換至另一個作業。
+分時系統／多元任務（Timesharing / Multitasking）：為多道程式設計的邏輯延伸，CPU 切換作業的頻率極高，創造出使用者能與執行中程式互動的**互動式運算（Interactive Computing）**環境。系統的回應時間（Response Time）通常應小於 1 秒。
+記憶體與排程調度：
+使用者在記憶體中執行的程式稱為行程（Process）。
+當有多個作業同時準備好執行時，由 CPU 排程（CPU Scheduling） 決定順序。
+若記憶體無法容納所有行程，透過**調換（Swapping）**將行程在記憶體與磁碟間移入移出。
+**虛擬記憶體（Virtual Memory）**允許行程在未完全載入主記憶體的情況下執行。
+
+五、 作業系統運作機制（Operating-System Operations）
+中斷驅動與陷阱（Trap / Exception）：作業系統由硬體中斷驅動；軟體錯誤或服務請求（如除以零、發起系統呼叫）則會產生陷阱／異常（Trap / Exception）。
+雙模式運作（Dual-Mode Operation）：硬體提供模式位元（Mode Bit）區分使用者模式（User Mode，Mode Bit = 1）與核心模式（Kernel Mode，Mode Bit = 0），以保護 OS 與其他系統元件。
+**特權指令（Privileged Instructions）**僅能在核心模式下執行。
+當使用者行程發起**系統呼叫（System Call）**時，會觸發 Trap 將 Mode Bit 切換為 0（核心模式），執行完成後再設回 1 並返回使用者模式。
+現代 CPU 亦可支援多模式運作（如支援虛擬機的 VMM 模式）。
+定時器機制（Timer）：為防止行程進入無窮迴圈或獨占資源，OS 在調度行程前會設定定時器。當計數歸零時會觸發中斷，強行將控制權交還給作業系統，以重新調度或終止超時程式。
+
+六、 行程管理（Process Management）
+程式 vs. 行程：程式是被動實體（Passive Entity，如磁碟中的檔案），而行程（Process）是執行中的程式，屬於系統中主動的實體（Active Entity）與工作單位。行程執行需要 CPU、記憶體、I/O、檔案等資源，結束時會回收可重複使用的資源。
+程式計數器（Program Counter, PC）與線程：
+**單線程行程（Single-Threaded Process）**擁有一個程式計數器（PC），按順序一次執行一條指令。
+**多線程行程（Multi-Threaded Process）**則每個線程（Thread）各自擁有一個 PC。
+系統透過多工（Multiplexing）CPU 在多個行程／線程間切換實現併行（Concurrency）。
+作業系統行程管理的核心活動：
+創建與刪除使用者及系統行程。
+暫停（Suspend）與恢復（Resume）行程。
+提供行程**同步（Synchronization）**機制。
+提供行程**通訊（Communication）**機制。
+提供**死鎖處理（Deadlock Handling）**機制。
+七、 記憶體管理（Memory Management）
+執行的基本要求：所有指令必須存放在記憶體中才能執行，且所有資料在處理前後皆須位於記憶體中1。記憶體管理決定何時將哪些內容載入記憶體，以最佳化 CPU 利用率與對使用者的回應速度1。
+作業系統核心活動：
+追蹤使用狀態：記錄記憶體的哪些部分目前正被使用以及由誰在使用1。
+決定搬移對象：決定哪些行程（或其部分）與資料需要移入（Move in）或移出（Move out）記憶體1。
+空間配置與釋放：根據需求動態配置與釋放記憶體空間1。
+
+八、 儲存管理（Storage Management）
+檔案系統抽象化（File-System Management）：
+作業系統將各種物理儲存媒介抽象化為統一的邏輯儲存單位——檔案（File）1。
+檔案通常組織為目錄（Directories），並設有存取控制（Access control）以管理使用者權限12。
+OS 核心活動包括：建立與刪除檔案及目錄、提供操作檔案與目錄的原語（Primitives）、將檔案映射至次級儲存，以及將檔案備份至穩定的非揮發性儲存媒介2。
+大容量儲存管理（Mass-Storage Management）：
+用於存放主記憶體無法容納或需長期保存的資料，整體電腦運作速度極度依賴磁碟子系統及其排程演算法23。
+OS 核心活動包括：未分配空間管理（Free-space management）、儲存空間配置（Storage allocation）與磁碟排程（Disk scheduling）3。
+三級儲存（Tertiary Storage）：包含光碟與磁帶等不需要高速運算的儲存媒介，區分為單次寫入多次讀取（WORM）與可讀寫（RW）類型3。
+資料遷移與快取一致性（Data Migration & Cache Coherency）：
+資料（如整數 A）會從磁碟逐層複製搬移至主記憶體、快取與硬體暫存器（Disk → Main Memory → Cache → Hardware Register）34。
+在多工與多處理器（Multiprocessor）環境下，系統必須透過硬體維持快取一致性（Cache Coherency），確保所有 CPU 的快取中都保有最新的資料值34。
+
+九、 核心資料結構（Kernel Data Structures）
+鏈結串列（Linked Lists）：包括單向鏈結串列（Singly linked list）、雙向鏈結串列（Doubly linked list）與環狀鏈結串列（Circular linked list）4。
+搜尋樹（Trees）：
+一般二元搜尋樹（Binary search tree）的搜尋效能為 O(n)45。
+**平衡二元搜尋樹（Balanced binary search tree）**的搜尋效能可大幅提升至 O(logn)5。
+雜湊圖與位元圖：
+雜湊圖（Hash Map）：透過雜湊函數（Hash function）建立映射5。
+位元圖（Bitmap）：由 n 個二進位位元組成的字串，用於代表 n 個項目的狀態（例如資源佔用狀態）5。
+Linux 核心實作：Linux 的資料結構定義於核心標頭檔中，例如 <linux/list.h>、<linux/kfifo.h> 與 <linux/rbtree.h>5。
+CH2
+一、 行程概念（Process Concept）
+程式與行程的定義（Program vs. Process）：
+程式（Program）：被動實體（Passive entity），為儲存於磁碟中的可執行檔。
+行程（Process）：主動實體（Active entity），為執行中的程式。當可執行檔被載入記憶體後，程式即轉變為行程。
+單一程式可以同時對應多個行程（例如多位使用者同時執行同一個程式）。
+行程的記憶體結構（Process in Memory）：
+Text Section：存放程式碼。
+Current Activity：包含程式計數器（Program Counter, PC）與處理器暫存器內容。
+Data Section：存放全域變數。
+Heap：於程式執行期間動態配置的記憶體空間。
+Stack：存放暫存資料，如函式參數、傳回位址與區域變數。
+五大行程狀態（Process State）：
+行程在執行時會隨時間轉換狀態：
+new：行程正在被建立。
+running：指令正在由 CPU 執行中。
+waiting：行程正等待特定事件發生（如等待 I/O 完成）。
+ready：行程已準備就緒，等待被分配給處理器執行。
+terminated：行程已結束執行。
+行程控制區塊（Process Control Block, PCB）：
+作業系統用於維護與記錄每個行程相關資訊的核心資料結構（亦稱 Task Control Block）。
+內容包含：行程狀態、程式計數器、CPU 暫存器、CPU 排程資訊（優先權與佇列指標）、記憶體管理資訊、會計資訊（CPU 使用量與運行時間）以及 I/O 狀態資訊（配置的 I/O 裝置與開啟檔案清單）。
+執行緒與 Linux 系統實作：
+傳統行程僅具備單一執行線程；若單一行程擁有多個程式計數器，則可同時執行多個位置，形成多執行緒（Multithreaded Processes），此時 PCB 需額外儲存各執行緒細節與多個程式計數器。
+在 Linux 系統中，行程由 C 語言結構體 task_struct 表示，包含 pid（行程識別碼）、state（狀態）、time_slice（排程時間片）、parent／children 指標、files（開啟檔案）與 mm（記憶體位址空間）等欄位。
+
+二、 行程排程（Process Scheduling）
+排程目標與佇列（Scheduling Queues）：
+排程目標：透過在 CPU 上快速切換行程，達到最大化 CPU 利用率與分時共享（Time sharing）。
+三大排程佇列：
+Job queue：系統中所有行程的集合。
+Ready queue：存放在主記憶體中，準備好且等待 CPU 執行的行程集合。
+Device queues：等待特定 I/O 裝置的行程集合。
+行程會在上述各個佇列之間流轉與遷移。
+三種排程器類型（Schedulers）：
+長期排程器（Long-term scheduler / Job scheduler）：從磁碟挑選行程載入 Ready queue。執行頻率較低（數秒至數分鐘一次），主要控制多道程式設計的程度（Degree of multiprogramming）。需維持 I/O-bound（多短 CPU burst、多 I/O）與 CPU-bound（少長 CPU burst、多計算）行程的良好平衡。
+短期排程器（Short-term scheduler / CPU scheduler）：從 Ready queue 選擇下一個配置 CPU 的行程。執行頻率極高（毫秒級），必須非常快速。
+中期排程器（Medium-term scheduler）：當需要降低多道程式設計程度時引入，將行程從記憶體移出至磁碟，待後續載回繼續執行，此機制稱為 Swapping（調換）。
+行動作業系統多工機制（Multitasking in Mobile Systems）：
+iOS：受到螢幕空間與 UI 限制，早期設計為單一前台行程（Foreground process），背景行程（Background processes）留存於記憶體中但受到嚴格限制（如僅允許短暫任務、接收通知或音訊播放）。
+Android：背景行程可透過 Service 執行任務，即使背景行程被暫停，無 UI 且佔用記憶體極小的 Service 仍可繼續運作。
+上下文切換（Context Switch）：
+當 CPU 切換至另一個行程執行時，系統必須保存舊行程的狀態並載入新行程已儲存的狀態。
+行程的上下文（Context）記錄於其 PCB 中。切換期間 CPU 無法進行有效工作，因此上下文切換時間屬於系統負擔（Overhead）
+三、 行程操作（Operations on Processes）
+行程創建（Process Creation）：
+行程樹（Process Tree）：父行程（Parent process）可創建子行程（Children processes），子行程可繼續創建其他行程，在系統中形成樹狀階層結構1。行程通常透過**行程識別碼（PID）**來進行唯一標記與管理1。
+資源共享選項（Resource Sharing Options）：
+父行程與子行程共享所有資源1。
+子行程僅共享父行程的部分資源子集1。
+父行程與子行程完全不共享任何資源2。
+執行併行選項（Execution Options）：
+父行程與子行程同步併行執行（Concurrently）2。
+父行程進入等待狀態（Wait），直到子行程執行終止2。
+UNIX 系統呼叫與記憶體配置：
+fork()：發起系統呼叫建立一個新的子行程，子行程的位址空間為父行程的完整複製副本（Duplicate）2。
+exec()：通常在 fork() 後呼叫，用新程式的記憶體空間覆蓋該行程並開始執行2。
+wait()：父行程呼叫 wait() 暫停執行，直到子行程執行結束被喚醒，並接收子行程傳回的狀態數據2。
+行程終止（Process Termination）：
+exit()：當行程執行完最後一條指令時，會呼叫 exit() 要求作業系統將其刪除並釋放記憶體等資源2。
+資源回收：子行程終止時會將狀態數據傳回給呼叫 wait() 的父行程2。若子行程超過資源限制或其任務不再需要，父行程亦可呼叫系統指令將子行程終止2。
+
+四、 行程間通訊（Interprocess Communication, IPC）
+合作行程（Cooperating Processes）：
+能影響其他行程或被其他行程影響的行程稱為合作行程3。
+四大優點：資訊共享（Information sharing）、計算加速（Computation speed-up）、模組化（Modularity）與便利性（Convenience）3。
+IPC 兩大模型比較：
+共享記憶體（Shared Memory）：建立一塊跨行程存取的共享記憶體區域進行資料存取，速度最快3。
+訊息傳遞（Message Passing）：行程間透過 OS 提供原語傳遞訊息，無須使用共享變數4。
+共享記憶體與生產者-消費者問題（Producer-Consumer Problem）：
+模型定義：生產者行程產生資訊，由消費者行程進行消費處理3。
+緩衝區類型：
+無界限緩衝區（Unbounded-buffer）：緩衝區容量無實質限制，生產者永不需等待3。
+有界限緩衝區（Bounded-buffer）：假設緩衝區大小固定為 BUFFER_SIZE35。
+有界限緩衝區（Bounded-Buffer）實作邏輯：
+共享資料：item buffer[BUFFER_SIZE]、int in = 0（寫入指標）與 int out = 0（讀取指標）5。
+狀態判斷條件：
+緩衝區為空：當 in == out 時4。
+緩衝區已滿：當 ((in + 1) % BUFFER_SIZE) == out 時45。
+空間利用：此演算法最多僅能同時使用 BUFFER_SIZE - 1 個元素空間（保留一格以區分空與滿）45。
+訊息傳遞機制（Message Passing）：
+基本操作：提供 send(message) 與 receive(message) 兩大原語6。
+通訊連結（Communication Link）：
+直接通訊（Direct Communication）：明確指定傳送或接收行程的名稱（如 send(P, message)）。
+間接通訊（Indirect Communication）：透過**郵箱（Mailbox / Port）**收發訊息6。
+同步機制（Synchronization）：
+阻塞型（Blocking / Synchronous）：send 必須等待至訊息被接收；receive 必須等待至有訊息傳入6。
+非阻塞型（Non-blocking / Asynchronous）：send 發送訊息後立即返回；receive 立即返回有效訊息或 Null6。
+訊息佇列緩衝區（Buffering）容量分類7：
+零容量（Zero capacity）：佇列長度為 0，傳送者必須等待接收者，稱為會合（Rendezvous）機制7。
+有限容量（Bounded capacity）：長度為固定值 n，若佇列滿了，傳送者必須等待7。
+無限容量（Unbounded capacity）：佇列長度無限，傳送者發送訊息時永遠無須等待
+五、 IPC 系統實例（Examples of IPC Systems）
+Mach 核心訊息機制：
+Mach 屬於微核心（Microkernel）架構，系統內部大部分的通訊皆以**訊息傳遞（Message Passing）**為基礎。
+連接埠（Ports）：通訊經由稱為 Port 的通訊通道/郵箱進行。Port 具有固定容量的訊息佇列，且可控制存取權限。
+系統呼叫如 mach_msg() 即透過發送與接收訊息來執行處理。
+Windows ALPC 機制：
+Windows 採用**高級本地程序呼叫（Advanced Local Procedure Call, ALPC）**作為同一台機器上行程間的通訊機制。
+連接埠物件（Port Objects）：利用連接埠（Connection Port）建立客戶端與伺服器子系統（Subsystem Server）之間的通訊連結。
+訊息傳送策略：
+小訊息：直接於訊息佇列中進行複製與傳送。
+大訊息：透過**共享記憶體區段（Section Object）**進行高速轉移，避免大規模資料複製帶來的系統負擔。
+
+六、 主從式系統通訊（Communication in Client-Server Systems）
+1. 套接字（Sockets）：
+定義：通訊的端點（Endpoint for Communication），由 IP 位址與連接埠號碼（Port Number） 組合而成。例如 161.25.19.8:1625。
+知名連接埠（Well-known Ports）：專用服務使用 1024 以下的 Port（如 SSH 使用 Port 22、Web/HTTP 使用 Port 80、Telnet 使用 Port 23）。
+Java Socket 分類：包含導向連線的 TCP Socket (Socket)、非連線的 UDP Socket (DatagramSocket) 以及多播套接字 (MulticastSocket)。
+2. 遠端程序呼叫（RPC, Remote Procedure Calls）：
+概念：將跨網路獨立系統間的通訊抽象化，使呼叫遠端主機上的程序就如同呼叫本地端函式一樣。
+Stub（虛擬代理）：
+客戶端 Stub：負責定位伺服器，並將呼叫參數進行**編包（Marshalling）**後打包成網路訊息發送。
+伺服器端 Stub：接收訊息、解包（Unmarshalling）參數，並執行遠端程序後將結果傳回。
+資料表示法（XDR）：為解決不同架構間位元組順序（Big-endian vs. Little-endian）的差異，採用**外部資料表示法（External Data Representation, XDR）**進行格式轉換。
+執行語意：包含「最多一次」（At-most-once，搭配時間戳記防範重複）與「恰好一次」（Exactly-once，加上接收確認）。
+3. 管道（Pipes）：
+普通管道（Ordinary Pipes / Anonymous Pipes）：
+允許兩行程間進行標準單向通訊（Unidirectional）。
+通訊行程間必須具備父子或親屬血緣關係（Parent-child relationship）。
+一端寫入（Write-end），另一端讀取（Read-end）。
+具名管道（Named Pipes / FIFOs）：
+支援**雙向通訊（Bi-directional）**且無須血緣關係限制，多個行程可同時共享使用。
+即使建立管道的行程結束，具名管道仍會留存於檔案系統中。
+4. Google Chrome 瀏覽器的多行程架構（Multi-Process Architecture）：
+傳統瀏覽器採用單行程設計，若某個 Web 頁面崩潰（Crash）會導致整個瀏覽器停止回應。
+Chrome 採用獨立多行程架構以提升安全性與穩定度：
+Browser Process（瀏覽器主行程）：管理使用者介面（UI）、磁碟 I/O 與網路通訊。
+Renderer Process（渲染行程）：負責解析與繪製 HTML/CSS/JavaScript。執行於**沙盒（Sandbox）**中以隔離惡意程式；每開啟一個新分頁（Tab）通常即建立獨立的 Renderer 行程。
+Plug-in Process（套件行程）：針對 Flash、Silverlight 等第三方外掛獨立運行
+
+1. 共享記憶體（Shared Memory）
+白話比喻：「同一間辦公室裡的公用白板」。
+運作方式：兩個行程（Process）向作業系統申請一塊「共用記憶體區域」。行程 A 要給資料時，直接把資料寫在白板上（例如生產者 Producer 寫入資料）；行程 B 需要資料時，直接跑到白板前面讀取（例如消費者 Consumer 讀取資料）。
+特色：
+速度極快：因為資料直接寫在記憶體裡，不用每次都請作業系統當郵差傳遞。
+程式設計師要自己負責管理：如果兩個人同時跑去白板寫字，內容會被蓋掉或變亂碼，所以程式必須自己維護指標（如 in 與 out 緩衝區指標）或鎖定機制，才不會發生衝突。
+
+2. 訊息傳遞（Message Passing）
+白話比喻：「互相傳 LINE 訊息或寄信」。
+運作方式：兩個行程完全不共用記憶體，而是透過作業系統提供的「郵局系統」，利用 send()（發送）和 receive()（接收）來傳遞資料。
+特色：
+簡單且安全：行程記憶體彼此獨立、不會互相干擾，連不在同一台電腦上的網路系統（如 Client 與 Server）也能用這套機制通訊。
+傳輸模式彈性：
+直寄 vs. 郵箱：可以直接指名傳給某個行程（直接通訊），也可以寄到公共「郵箱 / Mailbox」（間接通訊）。
+要不要原地等：可以設定成「寄出後一直站在原地等對方收到」（阻塞型 Blocking / 同步，兩邊同時對齊稱為 Rendezvous 會合）；也可以設定成「信寄出去後，不管對方收到沒，我先去忙別的事」（非阻塞型 Non-blocking / 非同步
+CH3
+一、 CPU–I/O 爆發週期（CPU–I/O Burst Cycle）
+多道程式設計目標：作業系統採用多道程式設計（Multiprogramming）的核心目的在於取得最大化的 CPU 利用率。
+交替循環特性：行程（Process）的執行過程是由 CPU 計算（CPU burst） 與 I/O 等待（I/O burst） 交替循環組成的。行程的執行始於 CPU burst，隨後接續 I/O burst，兩者交替進行，最後以一個 CPU burst 發起系統呼叫結束執行。
+CPU Burst 的分佈特徵：根據統計直方圖（Histogram of CPU-burst Times），CPU burst 的時間分佈呈現大量「短 CPU burst」與極少數「長 CPU burst」的特徵。
+
+二、 CPU 排程器（CPU Scheduler）
+角色與職責：**短期排程器（Short-term scheduler / CPU scheduler）**負責從主記憶體中處於就緒佇列（Ready queue）的行程中挑選一個，並將 CPU 配置給該行程執行。就緒佇列中的行程可以透過不同的排序機制（如 FIFO 或優先權）進行管理。
+發起排程決策的 4 個時機點：
+行程從 Running 狀態轉為 Waiting 狀態（例如發起 I/O 請求或等待特定事件完成）。
+行程從 Running 狀態轉為 Ready 狀態（例如發生中斷或時間切片到期）。
+行程從 Waiting 狀態轉為 Ready 狀態（例如 I/O 操作完成或事件到達）。
+行程終止（Terminates）。
+
+三、 搶占式與非搶占式排程（Preemptive vs. Nonpreemptive Scheduling）
+非搶占式排程（Nonpreemptive / Cooperative Scheduling）：
+僅在上述情況 1 與情況 4 發生時進行排程。
+一旦 CPU 配置給某個行程，該行程會一直佔用 CPU，直到它主動釋放控制權（轉為 Waiting 狀態）或終止為止。
+搶占式排程（Preemptive Scheduling）：
+包含上述情況 2 與情況 3（例如因中斷或時間片到期而被強制切換）。
+作業系統可強行中斷正在執行的行程，並將 CPU 重新分配給優先權更高的行程。
+搶占式排程的實作挑戰：
+共用資料存取（Shared Data Access）：若行程在修改共享資料時被搶占，可能導致競態條件（Race Condition）與資料不一致。
+核心模式下的搶占（Kernel Mode Preemption）：在執行系統呼叫時若被搶占，核心必須妥善處理狀態與鎖定機制。
+關鍵 OS 活動期間的中斷：在核心處理關鍵資料結構時發生中斷，需要特別的保護機制。
+
+四、 分派器與分派延遲（Dispatcher and Dispatch Latency）
+分派器（Dispatcher）：分派器是一個核心模組，負責將 CPU 的實際控制權交給由短期排程器所選出的行程。
+分派器的三大核心任務：
+上下文切換（Switching context）：保存當前行程狀態並載入新行程狀態。
+切換至使用者模式（Switching to user mode）。
+**跳轉至使用者程式的適當位置（Jumping to proper location）**以重啟該程式。
+分派延遲（Dispatch Latency）：指分派器停止一個行程並啟動另一個行程所需花費的時間，這段時間屬於純粹的系統開銷（Overhead）。
+一、 五大核心排程指標（Scheduling Criteria）
+作業系統在評估與比較不同的 CPU 排程演算法時，主要依據以下 5 個 key 效能指標：
+CPU 利用率（CPU Utilization）
+定義：保持 CPU 處於忙碌狀態的時間百分比，目標是讓 CPU 盡可能高效率地運作。
+吞吐量（Throughput）
+定義：單位時間內所完成執行的行程數量。
+轉向時間／週轉時間（Turnaround Time）
+定義：特定行程從**提交（submission）到執行完成（completion）**所花費的時間總和（包含在 Ready queue 等待、CPU 計算與 I/O 的時間）。
+等待時間（Waiting Time）
+定義：行程在**就緒佇列（Ready queue）**中累積等待 CPU 分配的總時間。（排程演算法主要影響等待時間，而非行程本身的計算時間）。
+回應時間（Response Time）
+定義：特別適用於分時（Time-sharing）環境，從使用者提交請求到系統**產生第一個回應（first response）**所需的時間（並非指全部結果輸出完成的時間）。
+
+二、 排程演算法的最佳化目標（Optimization Criteria）
+理想的 CPU 排程演算法通常追求以下優化目標：
+最大化（Maximize）：
+CPU 利用率
+吞吐量
+最小化（Minimize）：
+轉向時間
+等待時間
+回應時間
+
+三、 系統類型的權衡（Trade-offs）
+在實際系統設計中，很難同時讓所有指標都達到最佳，必須依應用場景進行選擇：
+批次系統（Batch Systems）：著重於提高吞吐量與降低轉向時間。
+互動式系統（Interactive Systems）：優先關注降低回應時間以提升使用者體驗。
+整體平均 vs. 極端狀況：除了計算「平均等待時間」外，有時為了防止個別行程遭遇嚴重的延遲，也會嘗試控制「最大等待時間/回應時間」
+第一組：FCFS vs. SJF / SRTF
+1. 先來先服務排程（FCFS, First-Come, First-Served）
+基本概念與運作機制：
+依照行程進入就緒佇列（Ready queue）的先後順序分配 CPU28。最先到達的行程最先獲得 CPU 執行28。
+實作上通常使用先進先出（FIFO）佇列管理29。
+搶占屬性：
+屬於**非搶占式（Nonpreemptive）**排程10。行程一旦取得 CPU 控制權，就會一直執行到該次 CPU burst 完成，或主動發起 I/O 轉為 Waiting 狀態210。
+核心問題 — 護衛效應（Convoy Effect）：
+現象描述：當一個長 CPU-bound 行程排在前面時，後方許多短 I/O-bound 的行程必須在 Ready queue 中長時間等待3。
+數據比較範例38：
+假設有三個行程 P1(24ms),P2(3ms),P3(3ms) 均在時間 0 到達8：
+順序 P1→P2→P3：等待時間分別為 P1=0,P2=24,P3=27，平均等待時間高達 17 ms8。
+順序 P2→P3→P1：等待時間分別為 P1=6,P2=0,P3=3，平均等待時間大幅降至 3 ms3。
+優缺點評析：
+優點：演算法極為簡單，程式實作與邏輯直觀。
+缺點：平均等待時間波動大且通常較長，容易產生護衛效應，不適用於分時或互動式系統38。
+
+2. 最短工作優先排程（SJF, Shortest-Job-First）與 SRTF
+基本概念與運作機制：
+評估每個行程下一次 CPU burst 的長度，優先將 CPU 分配給 CPU burst 最短的行程3。
+理論最佳性（Optimal）：在所有排程演算法中，SJF 能夠提供最小的平均等待時間（Minimum average waiting time）3。
+兩種執行模式（非搶占式 vs. 搶占式 SRTF）：
+非搶占式 SJF：當行程取得 CPU 後，即使期間有更短 CPU burst 的新行程到達 Ready queue，目前行程仍會繼續執行完畢311。
+搶占式 SJF — 最短剩餘時間優先（SRTF, Shortest-Remaining-Time-First）：當新行程到達 Ready queue 時，系統會比較新行程的 CPU burst 時間與當前行程的剩餘 CPU 時間；若新行程時間更短，OS 會強制搶占當前行程並切換給新行程1112。
+實作難題與預測演算法（Exponential Averaging）：
+難點：在實際 OS 中無法事先得知下一次 CPU burst 的精確時間3。
+解決方案：透過過去的歷史紀錄，使用**指數平均法（Exponential Averaging）**估算下一次 CPU burst 長度13：
+τn+1=αtn+(1-α)τn
+tn 為第 n 次實際 CPU burst 時間13。
+τn 為第 n 次預測的 CPU burst 時間13。
+α 為加權常數（0≤α≤1，通常設為 12）1113。若 α=1 則僅採計最近一次紀錄；若 α=0 則無視最近紀錄11。
+優缺點評析：
+優點：平均等待時間達到理論最低3。
+缺點：未來時間無法精確預知；若短行程不斷湧入，長行程可能會長期無法取得 CPU，產生飢餓現象（Starvation）3
+第二組：優先權排程 vs. 輪轉排程
+3. 優先權排程（Priority Scheduling）
+基本概念與運作機制：
+每個行程（Process）皆關聯一個優先權數值（Priority number，通常為整數）1。
+系統會將 CPU 配置給 Ready queue 中優先權最高的行程1。在常見的習慣約定中，整數數字越小代表優先權越高（Smallest integer ≡ Highest priority）1。
+與 SJF 的內在聯繫：SJF 實際上是優先權排程的一種特例，其優先權為預測下一次 CPU burst 長度的倒數（即預測 CPU burst 越短，優先權越高）1。
+搶占屬性：
+可分為**搶占式（Preemptive）與非搶占式（Nonpreemptive）**兩類1：
+搶占式：當新到達行程的優先權高於當前執行行程時，系統會強行搶占 CPU 並切換給新行程1。
+非搶占式：新到達的高優先權行程僅置於 Ready queue 的前端，等當前行程完畢後再被調度1。
+核心問題 — 飢餓現象（Starvation / Indefinite Blocking）：
+現象描述：低優先權的行程可能會因為系統中源源不絕湧入的高優先權行程，而永遠無法取得 CPU 執行2。
+解決方案 — 老化技術（Aging）：
+運作機制：隨著時間推移，系統會逐步提高在 Ready queue 中等待時間過長的行程之優先權2。例如，每等待一段時間就將優先權數值減 1（提升優先權），確保所有低優先權行程最終都能順利執行2。
+
+4. 輪轉排程（Round Robin, RR）
+基本概念與運作機制：
+專為**分時系統（Timesharing systems）**設計的搶占式排程演算法，目標是提升互動式回應34。
+系統設定一個極小的時間單位，稱為時間切片／時間量子（Time Quantum q），通常界於 10 至 100 毫秒之間45。
+就緒佇列（Ready queue）作為**環狀佇列（Circular queue）**運作，CPU 依次分配給佇列中的行程，每個行程每次最多執行 q 個時間單位4。
+當時間量子到期時，定時器（Timer）發出中斷，搶占當前行程並將其移至 Ready queue 的末端，隨後調度下一個行程4。
+等待時間界限（Bound on Waiting Time）：
+若 Ready queue 中有 n 個行程且時間量子為 q，每個行程每次最多獲得 q 時間單位的 CPU 時間4。
+任何行程等待 CPU 的時間不會超過 (n-1)q 時間單位4。
+時間切片 q 的選擇與效能權衡：
+若 q 極大（q→∞）：RR 演算法會退化為 FCFS（先來先服務） 演算法45。
+若 q 極小（q→0）：理論上可達成「處理器共享（Processor Sharing）」，但實務上會因 上下文切換（Context Switch）頻率過高，導致極嚴重的系統開銷（Overhead）45。
+最佳經驗法則：時間切片 q 相較於上下文切換時間必須足夠大（例如上下文切換時間 $< 10\,\mu\text{s}$），且建議 約 80% 的 CPU burst 長度應小於 q5。
+優缺點評析：
+優點：提供極佳且公平的回應時間（Response Time），可防止行程飢餓46。
+缺點：平均轉向時間（Average Turnaround Time）通常高於 SJF5。
+第三組：多層佇列排程 vs. 多層回饋佇列排程
+5. 多層佇列排程（Multilevel Queue Scheduling）
+基本概念與運作機制：
+將就緒佇列（Ready queue）切分為數個獨立的子佇列12。
+劃分依據通常為行程的性質或型態，例如12：
+前景行程（Foreground / Interactive processes）：需快速回應的互動式行程2。
+背景行程（Background / Batch processes）：執行時間長且不需即時互動的批次行程2。
+系統亦可進一步劃分為：系統行程（System）、互動式行程（Interactive）、批次行程（Batch）與學生行程（Student processes）等多個階層23。
+靜態固定指派：行程被永久歸類（Permanently assigned）於特定的子佇列中，無法在佇列之間搬移2。
+獨立的子佇列演算法：每個子佇列可套用最適合其特性的排程演算法2。例如前景佇列採用 Round Robin (RR) 以確保互動回應，背景佇列則採用 FCFS 以降低切換開銷2。
+佇列之間的排程機制（Scheduling Between Queues）：
+固定優先權排程（Fixed Priority Scheduling）：高優先權佇列只要有行程，低優先權佇列就無法獲得 CPU2。缺點是容易引發飢餓現象（Starvation）2。
+時間切片／比例分配排程（Time Slice / Proportional Allocation）：每個佇列獲得固定比例的 CPU 時間2。例如將 80% 的 CPU 時間分配給前景佇列（以 RR 運作），20% 分配給背景佇列（以 FCFS 運作）2。
+
+6. 多層回饋佇列排程（Multilevel Feedback Queue Scheduling）
+基本概念與運作機制：
+為解決固定多層佇列不夠靈活及低優先權行程可能飢餓的問題，允許行程在不同的子佇列之間流動與轉移（Move between queues）3。
+動態升降級機制：
+降級（Demotion）：佔用 CPU 時間過長的 CPU-bound 行程會被移往優先權較低的佇列3。
+升級（Promotion / Aging）：在低優先權佇列中等待時間過長的行程會被提升至高優先權佇列，藉此實作**老化機制（Aging）**以防範飢餓3。
+定義排程器的 5 大核心參數（Parameters）：
+子佇列的數量（Number of queues）3。
+每個佇列所使用的排程演算法（Scheduling algorithm for each queue）3。
+決定行程何時**升級（Upgrade）**至高優先權佇列的方法3。
+決定行程何時**降級（Demote）**至低優先權佇列的方法3。
+決定新行程進入系統時應先進入哪個佇列的方法3。
+經典三層佇列運作範例：
+系統設有三個佇列 Q0,Q1,Q234：
+Q0：採用 Round Robin，時間量子 q=8ms（最高優先權）34。
+Q1：採用 Round Robin，時間量子 q=16ms（中優先權）4。
+Q2：採用 FCFS（最低優先權）4。
+執行流程：
+新行程首先進入最高優先權的 Q0，獲得 8 ms 執行時間4。
+若行程無法在 8 ms 內完成，代表為較長的計算任務，會被搶占並降級移入 Q14。
+在 Q1 中額外獲得 16 ms 執行時間；若仍未完成，再次被搶占並降級移入最低優先權的 Q2（依 FCFS 順序執行）4。
+設計效益：短 CPU burst（如 I/O-bound 或互動式）行程能迅速在最高層完成，長 CPU burst 行程則自動沉降至底層，兼顧了快速回應與處理器利用率34。
+
+四、 多處理器排程（Multiple-Processor Scheduling）
+1. 多處理器架構與排程方式（Scheduling Approaches）
+非對稱多處理（Asymmetric Multiprocessing, AMP）：
+運作機制：由單一主處理器（Master Server）負責所有排程決策、I/O 處理及系統活動。其餘處理器（Slave Processors）僅負責執行使用者程式碼。
+優缺點：因只有主處理器存取系統資料結構，避免了資料共享與同步鎖定的複雜度；但主處理器容易成為系統效能瓶頸。
+對稱多處理（Symmetric Multiprocessing, SMP）：
+運作機制：每個處理器皆具備自我排程（Self-scheduling）的能力。
+佇列架構：所有處理器可共同存取一個共享的就緒佇列（Common Ready Queue），或者每個處理器擁有獨立的私有就緒佇列（Private Ready Queue）。
+同步挑戰：當多個 CPU 同時存取共享佇列時，必須使用鎖定機制保護，以避免競態條件（Race Condition）。
+
+2. 處理器親和性（Processor Affinity）
+快取與親和性概念：
+當行程在某個 CPU 上執行時，其資料會填入該 CPU 的專屬快取記憶體（Cache）中。若將行程強行移至另一個 CPU 執行，原快取的資料將無效化，且必須在新 CPU 上重新載入資料，這會產生極高的系統開銷（High Overhead）。
+因此，排程器會儘量讓行程保持在同一個 CPU 上執行，這種特性稱為處理器親和性。
+親和性分類：
+軟親和性（Soft Affinity）：作業系統會盡量試圖讓行程留在原 CPU 上執行，但不保證絕對不搬移。
+硬親和性（Hard Affinity）：系統允許行程透過系統呼叫指定只能在特定的 CPU 集合上執行。
+NUMA 架構影響：
+在非均勻記憶體存取（NUMA）架構下，CPU 存取本地記憶體（Local Memory）的速度遠快於遠端記憶體。排程器與記憶體配置器必須互相配合，確保行程被分配至離其記憶體空間最近的 CPU 上執行。
+
+3. 負載平衡（Load Balancing）
+核心目標：在採用私有就緒佇列的 SMP 系統中，容易出現部分 CPU 佇列過載而部分 CPU 空閒的情況，負載平衡旨在均勻分配工作量以最大化整體 CPU 利用率。
+兩大負載平衡策略：
+推式遷移（Push Migration）：系統設置獨立的監控任務，定期檢查各 CPU 的負載情況；當發現負載不均時，主動將行程從繁忙 CPU「推（Push）」往空閒或低負載的 CPU。
+拉式遷移（Pull Migration）：當某個 CPU 變為空閒（Idle）時，該 CPU 會主動從其他繁忙 CPU 的佇列中「拉（Pull）」取一個等待中的行程過來執行。
+親和性 vs. 負載平衡的權衡（Trade-off）：
+負載平衡強行搬移行程會破壞處理器親和性並引發快取失效；而維持親和性則可能導致負載不均。現代作業系統排程器需要在兩者之間取得最佳平衡。
+
+4. 多核心與硬體多執行緒（Multicore & Multithreading Processors）
+多核心晶片（Multicore Processors）：將多個 CPU 核心整合於同一塊實體晶片上，核心間可共享高階快取，具備更高的通訊速度與更低的能耗。
+記憶體停頓與硬體執行緒（Memory Stall & Hardware Threads）：
+當 CPU 發生快取未命中（Cache Miss）需要存取主記憶體時，會產生長時間的記憶體停頓（Memory Stall）。
+超執行緒／硬體多執行緒：單一核心內保留多組架構狀態（暫存器與 PC），當一個硬體執行緒遭遇記憶體停頓時，核心可瞬間切換至另一個硬體執行緒執行，從而有效隱藏記憶體延遲時間。

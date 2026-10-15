@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OS Master — 作業系統期中考互動複習系統</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 數學符號與公式排版 (KaTeX) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+  <!-- 頂部導覽列 -->
+  <header class="navbar">
+    <div class="brand">
+      <span class="brand-title">OS Master</span>
+      <span class="brand-badge">作業系統期中考複習系統</span>
+    </div>
+    <nav class="nav-links">
+      <button class="nav-btn active" data-tab="notes">章節核心重點</button>
+      <button class="nav-btn" data-tab="exam-focal">高頻考點演練</button>
+      <button class="nav-btn" data-tab="simulator">甘特圖排程計算器</button>
+      <button class="nav-btn" data-tab="quiz">期中考刷題庫</button>
+      <button class="nav-btn" data-tab="mistakes">錯題專攻本</button>
+      <button class="nav-btn" data-tab="flashcards">觀念抽認卡</button>
+      <button class="nav-btn" data-tab="extensions">擴充管理中心</button>
+    </nav>
+  </header>
+
+  <!-- 主體容器 -->
+  <main class="main-container">
+
+    <!-- 頂端學習指標橫條 -->
+    <section class="stats-banner">
+      <div class="stat-item">
+        <span class="stat-label">題庫正確率</span>
+        <span class="stat-value" id="stat-quiz-accuracy">0%</span>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="stat-progress-fill"></div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">已作答題數</span>
+        <span class="stat-value" id="stat-quiz-answered">0 題</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">錯題累積</span>
+        <span class="stat-value" id="stat-mistakes" style="color: var(--accent-rose);">0 題待複習</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">抽認卡掌握進度</span>
+        <span class="stat-value" id="stat-flashcards" style="color: var(--accent-emerald);">0 張已掌握</span>
+      </div>
+    </section>
+
+    <!-- Tab 1: 章節核心重點 -->
+    <section class="tab-content active" id="tab-notes">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">章節核心重點導讀</h1>
+          <p class="page-subtitle">完整收錄課程核心考點與機制剖析，支援即時關鍵字篩選</p>
+        </div>
+      </div>
+
+      <div class="chapter-nav" id="chapter-nav-container"></div>
+
+      <div class="search-box-wrap">
+        <input type="text" id="note-search-input" class="search-input" placeholder="搜尋關鍵字（例如：DMA、護衛效應、fork、緩衝區、中斷）..." />
+      </div>
+
+      <div id="chapter-content-container"></div>
+    </section>
+
+    <!-- Tab 2: 高頻考點演練 (記憶體金字塔 + 排程器對照表) -->
+    <section class="tab-content" id="tab-exam-focal">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">高頻考點演練專區</h1>
+          <p class="page-subtitle">針對課堂提示之「記憶體階層填空（必考）」與「三大排程器比較」進行專項突破</p>
+        </div>
+      </div>
+
+      <!-- 記憶體階層圖模組 -->
+      <div class="card">
+        <div class="card-title">
+          <span>考點一：儲存階層金字塔（Storage Hierarchy）填空挑戰</span>
+          <div class="btn-group">
+            <button class="btn active" id="btn-pyramid-study">完整對照學習</button>
+            <button class="btn" id="btn-pyramid-quiz2">期中考模式（隨機挖空 2 格）</button>
+            <button class="btn" id="btn-pyramid-quiz34">高難度挑戰（隨機挖空 3~4 格）</button>
+            <button class="btn" id="btn-pyramid-quizall">地獄全挖空挑戰</button>
+          </div>
+        </div>
+        <div class="alert-box">
+          <strong>課堂考試提示：</strong> 記憶體階層圖必考填空題，考試時將挖空兩項要求填寫，請熟記完整由上而下的層級名稱、速度與揮發性特性。
+        </div>
+
+        <div id="pyramid-display"></div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+          <button class="btn btn-primary" id="btn-pyramid-check" style="display: none; padding: 0.6rem 2rem; font-size: 1rem;">送出核對答案</button>
+        </div>
+        <div class="alert-box" id="pyramid-feedback" style="display: none; margin-top: 1rem;"></div>
+      </div>
+
+      <!-- 三大排程器比較表模組 -->
+      <div class="card">
+        <div class="card-title">
+          <span>考點二：三大排程器深度對照（Schedulers Comparison）</span>
+          <span class="badge badge-tag">名詞解釋必考</span>
+        </div>
+        <div class="alert-box info">
+          <strong>考試問答核心：</strong> 長期、中期、短期排程器之觸發頻率、主控目標與所在階層對比。
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>排程器類型</th>
+                <th>執行頻率（Frequency）</th>
+                <th>核心職責與目標</th>
+                <th>控制指標與機制</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>長期排程器<br/>(Long-term / Job Scheduler)</strong></td>
+                <td>低頻（數秒至數分鐘一次）</td>
+                <td>從磁碟集區挑選作業載入主記憶體的 Ready queue</td>
+                <td>控制「多道程式設計的程度（Degree of Multiprogramming）」，維持 I/O-bound 與 CPU-bound 的良好平衡</td>
+              </tr>
+              <tr>
+                <td><strong>短期排程器<br/>(Short-term / CPU Scheduler)</strong></td>
+                <td>極高頻（毫秒級，10 - 100 ms）</td>
+                <td>從 Ready queue 選擇下一個配置 CPU 運行的行程</td>
+                <td>必須極迅速執行，直接決定系統回應時間與 CPU 利用率</td>
+              </tr>
+              <tr>
+                <td><strong>中期排程器<br/>(Medium-term Scheduler)</strong></td>
+                <td>中頻（動態負載調節）</td>
+                <td>當記憶體不足時將行程移出至次級儲存，之後再移回</td>
+                <td>實作調換（Swapping）機制，暫時降低多道程式設計程度以減緩記憶體爭奪</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- IPC 兩大架構對照表模組 -->
+      <div class="card">
+        <div class="card-title">
+          <span>考點三：行程間通訊（IPC）兩大模型精準對比</span>
+          <span class="badge badge-tag">觀念計算必考</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>比較面向</th>
+                <th>共享記憶體（Shared Memory）</th>
+                <th>訊息傳遞（Message Passing）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>通訊概念比喻</strong></td>
+                <td>「同辦公室的公用白板」</td>
+                <td>「互相寄信或傳 LINE 訊息」</td>
+              </tr>
+              <tr>
+                <td><strong>通訊速度</strong></td>
+                <td>極快（僅在建立共用區塊時呼叫系統呼叫，後續直接讀寫記憶體）</td>
+                <td>較慢（每次傳遞均需經由核心 System Call）</td>
+              </tr>
+              <tr>
+                <td><strong>衝突與同步責任</strong></td>
+                <td>由程式設計師自行維護互斥與同步（如信號量、指標判定）</td>
+                <td>由作業系統核心負責緩衝區管理與訊息佇列同步</td>
+              </tr>
+              <tr>
+                <td><strong>網路分散式支援</strong></td>
+                <td>僅限同一主機內部</td>
+                <td>天生支援跨網路不同主機通訊（Client-Server）</td>
+              </tr>
+              <tr>
+                <td><strong>有界限緩衝區關鍵公式</strong></td>
+                <td colspan="2">
+                  宣告：<code>item buffer[BUFFER_SIZE]</code>，<code>in</code> 與 <code>out</code> 指標。<br/>
+                  - <strong>為空條件：</strong> <code>in == out</code><br/>
+                  - <strong>已滿條件：</strong> <code>(in + 1) % BUFFER_SIZE == out</code><br/>
+                  - <strong>空間利用：</strong> 最多僅能存放 <code>BUFFER_SIZE - 1</code> 個項目（保留一格空位以區隔空與滿）。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 考點四：死結處置四大策略全維度矩陣對照 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>考點四：死結處置四大策略全維度矩陣對照（Deadlock Handling Strategies）</span>
+          <span class="badge badge-tag">期中核心大題</span>
+        </div>
+        <div class="alert-box info">
+          <strong>課堂問答核心：</strong> 死結預防、避免、偵測與忽視四大策略之核心機制、先驗資訊需求與資源利用率全面橫向對比。
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th style="min-width: 140px;">比較面向</th>
+                <th style="min-width: 180px;">死結預防 (Prevention)</th>
+                <th style="min-width: 180px;">死結避免 (Avoidance)</th>
+                <th style="min-width: 180px;">死結偵測 (Detection)</th>
+                <th style="min-width: 180px;">忽視死結 (Ignore / Ostrich)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>核心處理機制</strong></td>
+                <td>規範請求協定，強制破壞四個必要條件之一（互斥、持有並等待、不可搶佔、循環等待）</td>
+                <td>動態評估每次資源分配請求，確保系統永遠維持在安全狀態（Safe State）</td>
+                <td>平時不限制分配，定期或在特定時機執行偵測演算法，發現死結後進行復原</td>
+                <td>假裝死結永遠不會發生（鴕鳥策略）</td>
+              </tr>
+              <tr>
+                <td><strong>必要先驗資訊</strong></td>
+                <td>完全無需事先宣告資源需求</td>
+                <td>必須事先宣告各行程可能需要的最大資源量（Max Demand）</td>
+                <td>無需事先宣告，僅需當前 Allocation 與實際 Request 矩陣</td>
+                <td>無需任何先驗資訊</td>
+              </tr>
+              <tr>
+                <td><strong>資源利用率評估</strong></td>
+                <td>較低（過度嚴格限制資源請求方式）</td>
+                <td>較高（動態按需評估）</td>
+                <td>高（允許充分利用，發生死結才處置）</td>
+                <td>最高（完全不施加任何限制）</td>
+              </tr>
+              <tr>
+                <td><strong>系統額外開銷</strong></td>
+                <td>低至中（靜態規則限制）</td>
+                <td>高（每次分配皆需即時執行安全演算法推導）</td>
+                <td>中至高（需週期性搜尋環路或執行矩陣運算，復原需回滾行程）</td>
+                <td>極低（核心零額外運算開銷）</td>
+              </tr>
+              <tr>
+                <td><strong>主要代價與缺點</strong></td>
+                <td>容易引發系統資源閒置與行程飢餓（Starvation）</td>
+                <td>行程必須預知未來最大需求，實務通用系統極難準確宣告</td>
+                <td>死結發生時須終止行程或回滾，已完成運算成果可能遺失</td>
+                <td>若死結發生且持續擴大，系統可能凍結或崩潰，須仰賴人工介入</td>
+              </tr>
+              <tr>
+                <td><strong>典型實作 / 代表系統</strong></td>
+                <td>全域資源遞增編號排序（破壞循環等待）</td>
+                <td>銀行家演算法（Banker's Algorithm）、宣告邊 RAG 演算法</td>
+                <td>等待圖（Wait-for Graph）環路搜尋、矩陣偵測演算法</td>
+                <td>UNIX、Linux、Windows 等現代主流通用作業系統</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 考點五：死結四大必要條件與破壞預防策略對照 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>考點五：死結四大必要條件與破壞預防機制矩陣（Four Necessary Conditions & Prevention Matrix）</span>
+          <span class="badge badge-tag">名詞解釋必背</span>
+        </div>
+        <div class="alert-box">
+          <strong>必要條件定理：</strong> 死結發生當且僅當以下四項條件同時成立。死結預防（Deadlock Prevention）只要成功打破其中任何一項，即可保證系統絕不死結。
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th style="min-width: 140px;">必要條件名稱</th>
+                <th style="min-width: 220px;">條件精準定義</th>
+                <th style="min-width: 240px;">破壞手段與實作機制</th>
+                <th style="min-width: 220px;">實務可行性與系統代價</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>互斥<br/>(Mutual Exclusion)</strong></td>
+                <td>至少有一項資源必須處於非共用模式，一次僅能由一個行程持有；其他行程請求時必須等待。</td>
+                <td>將資源改為完全可共用模式（例如唯讀檔案 Read-only Files）。</td>
+                <td><strong>極難破壞</strong>。多數硬體設備（如印表機、磁帶機）本質上具有不可共用性，無法同時被多個行程寫入。</td>
+              </tr>
+              <tr>
+                <td><strong>持有並等待<br/>(Hold and Wait)</strong></td>
+                <td>行程至少持有一項資源，同時又在等待取得其他已被其他行程佔用的資源。</td>
+                <td>1. 協定一：行程在開始執行前，必須一次性申請並獲配全部所需資源。<br/>2. 協定二：行程僅在未持有任何資源時，才可提出新的資源請求。</td>
+                <td><strong>可行但代價高昂</strong>。會大幅降低資源利用率（未用資源被長期鎖定），且需要多種資源的大型行程極易面臨<strong>飢餓（Starvation）</strong>。</td>
+              </tr>
+              <tr>
+                <td><strong>不可搶佔<br/>(No Preemption)</strong></td>
+                <td>資源不能被系統強制剝奪，只能由持有該資源的行程在完成工作後自願釋放。</td>
+                <td>若持有資源的行程申請新資源無法立即獲得，系統強制搶佔並釋放其已佔有的所有舊資源；等所有資源皆可獲得時再重啟。</td>
+                <td><strong>僅適用於狀態容易保存與還原的資源</strong>（如 CPU 暫存器與主記憶體）；對印表機、資料庫鎖定等難以任意搶佔。</td>
+              </tr>
+              <tr>
+                <td><strong>循環等待<br/>(Circular Wait)</strong></td>
+                <td>存在等待行程鏈 $\{P_0, P_1, \dots, P_n\}$，其中 $P_0$ 等待 $P_1$ 持有之資源……$P_n$ 等待 $P_0$ 持有之資源，形成封閉環狀。</td>
+                <td><strong>建立全域總排序編號（Total Ordering）</strong>：對所有資源定義一對一函數 $F: R \to \mathbb{N}$，規定行程必須嚴格依資源編號之<strong>遞增順序</strong>提出申請。</td>
+                <td><strong>最常用且高度可行的預防手段</strong>。數學上可完全防止環路形成，但程式撰寫限制較大，且編號排序設計必須符合實際執行相依性。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 考點六：教材經典範例計算手冊與逐步推導 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>考點六：教材經典範例計算手冊（銀行家演算法與死結偵測逐步推導）</span>
+          <span class="badge badge-tag" style="background-color: var(--accent-rose); color: #fff;">期中計算必考</span>
+        </div>
+        <div class="alert-box success">
+          <strong>期中考大題指南：</strong> 以下完整收錄教材兩大經典大題之題幹配置矩陣、逐步推導運算式與判定結論，支援考試前反覆演練核對。
+        </div>
+
+        <!-- 動態隨機考題實戰演練器 -->
+        <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+            <div>
+              <span style="font-weight: 700; color: var(--primary); font-size: 1.05rem;">動態隨機考題產生器：死結與安全狀態自主判斷挑戰</span>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">按按鈕隨機產生配置矩陣與可用資源數字，讓你動筆判斷會不會造成死結，系統即時驗證並展開完整推導！</p>
+            </div>
+            <div class="btn-group">
+              <button class="btn active" id="btn-deadlock-mode-banker">銀行家演算法模式</button>
+              <button class="btn" id="btn-deadlock-mode-detect">死結偵測模式</button>
+              <button class="btn btn-primary" id="btn-gen-random-deadlock">隨機產生全新數字題組</button>
+            </div>
+          </div>
+
+          <!-- 動態題目渲染區 -->
+          <div id="dynamic-deadlock-question-area"></div>
+
+          <!-- 使用者互動判定區 -->
+          <div id="dynamic-deadlock-interaction-area" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+              <div style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span id="deadlock-question-prompt">你的判定結論：</span>
+                <div class="btn-group">
+                  <button class="btn" id="btn-choice-safe">安全狀態／不會死結</button>
+                  <button class="btn" id="btn-choice-unsafe">不安全狀態／發生死結</button>
+                </div>
+              </div>
+              <div class="btn-group">
+                <button class="btn" id="btn-toggle-need-helper" style="display: none;">切換顯示 Need 矩陣</button>
+                <button class="btn btn-primary" id="btn-submit-deadlock-verdict" disabled>送出核對判定</button>
+              </div>
+            </div>
+            <div id="deadlock-verification-result" style="display: none; margin-top: 1rem;"></div>
+          </div>
+        </div>
+
+        <!-- 題目一：銀行家演算法綜合分析題 -->
+        <div style="margin-top: 1.25rem;">
+          <h3 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 0.5rem;">【大題一】銀行家演算法綜合分析題（教材範例 1）</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+            系統中有 5 個行程（$P_0 \sim P_4$）與 3 種資源類型：$A$（10 個實例）、$B$（5 個實例）、$C$（7 個實例）。時間點 $T_0$ 的資源配置狀態如下：
+          </p>
+
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>行程</th>
+                  <th>已分配資源 Allocation (A B C)</th>
+                  <th>最大需求量 Max (A B C)</th>
+                  <th>系統可用資源 Available (A B C)</th>
+                  <th>尚需資源 Need = Max - Allocation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>P0</strong></td>
+                  <td>0 1 0</td>
+                  <td>7 5 3</td>
+                  <td rowspan="5" style="vertical-align: middle; font-weight: 700; color: var(--accent-amber); text-align: center;">
+                    Available = (3, 3, 2)<br/>
+                    <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">
+                      A: 10 - 7 = 3<br/>
+                      B: 5 - 2 = 3<br/>
+                      C: 7 - 5 = 2
+                    </span>
+                  </td>
+                  <td style="color: var(--primary); font-weight: 600;">(7, 5, 3) - (0, 1, 0) = <strong>(7, 4, 3)</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>P1</strong></td>
+                  <td>2 0 0</td>
+                  <td>3 2 2</td>
+                  <td style="color: var(--primary); font-weight: 600;">(3, 2, 2) - (2, 0, 0) = <strong>(1, 2, 2)</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>P2</strong></td>
+                  <td>3 0 2</td>
+                  <td>9 0 2</td>
+                  <td style="color: var(--primary); font-weight: 600;">(9, 0, 2) - (3, 0, 2) = <strong>(6, 0, 0)</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>P3</strong></td>
+                  <td>2 1 1</td>
+                  <td>2 2 2</td>
+                  <td style="color: var(--primary); font-weight: 600;">(2, 2, 2) - (2, 1, 1) = <strong>(0, 1, 1)</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>P4</strong></td>
+                  <td>0 0 2</td>
+                  <td>4 3 3</td>
+                  <td style="color: var(--primary); font-weight: 600;">(4, 3, 3) - (0, 0, 2) = <strong>(4, 3, 1)</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; margin-top: 1rem;">
+            <h4 style="color: var(--accent-emerald); font-size: 0.95rem; margin-bottom: 0.5rem;">推導步驟一：執行安全演算法（Work = Available = (3, 3, 2)）</h4>
+            <ol style="margin-left: 1.5rem; font-size: 0.9rem; line-height: 1.8; color: var(--text-light);">
+              <li>檢查 $P_1$：$Need_1(1, 2, 2) \le Work(3, 3, 2)$ 成立 $\implies Work = Work + Allocation_1 = (3, 3, 2) + (2, 0, 0) = \mathbf{(5, 3, 2)}$，$Finish[1] = true$。</li>
+              <li>檢查 $P_3$：$Need_3(0, 1, 1) \le Work(5, 3, 2)$ 成立 $\implies Work = Work + Allocation_3 = (5, 3, 2) + (2, 1, 1) = \mathbf{(7, 4, 3)}$，$Finish[3] = true$。</li>
+              <li>檢查 $P_4$：$Need_4(4, 3, 1) \le Work(7, 4, 3)$ 成立 $\implies Work = Work + Allocation_4 = (7, 4, 3) + (0, 0, 2) = \mathbf{(7, 4, 5)}$，$Finish[4] = true$。</li>
+              <li>檢查 $P_2$：$Need_2(6, 0, 0) \le Work(7, 4, 5)$ 成立 $\implies Work = Work + Allocation_2 = (7, 4, 5) + (3, 0, 2) = \mathbf{(10, 4, 7)}$，$Finish[2] = true$。</li>
+              <li>檢查 $P_0$：$Need_0(7, 4, 3) \le Work(10, 4, 7)$ 成立 $\implies Work = Work + Allocation_0 = (10, 4, 7) + (0, 1, 0) = \mathbf{(10, 5, 7)}$，$Finish[0] = true$。</li>
+            </ol>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--accent-emerald); font-weight: 600;">
+              結論：所有行程之 Finish 皆為 true，系統處於安全狀態，合法安全序列為 $\langle P_1, P_3, P_4, P_2, P_0 \rangle$。
+            </p>
+          </div>
+
+          <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; margin-top: 1rem;">
+            <h4 style="color: var(--accent-cyan); font-size: 0.95rem; margin-bottom: 0.5rem;">推導步驟二：動態資源請求評估</h4>
+            <div style="font-size: 0.9rem; line-height: 1.8; color: var(--text-light);">
+              <p><strong>1. 行程 $P_1$ 提出請求 $Request_1 = (1, 0, 2)$：</strong></p>
+              <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
+                <li>檢查 1：$Request_1(1, 0, 2) \le Need_1(1, 2, 2)$（符合）。</li>
+                <li>檢查 2：$Request_1(1, 0, 2) \le Available(3, 3, 2)$（符合）。</li>
+                <li>假裝分配更新：$Available = (3, 3, 2) - (1, 0, 2) = \mathbf{(2, 3, 0)}$；$Allocation_1 = (3, 0, 2)$；$Need_1 = (0, 2, 0)$。</li>
+                <li>執行安全演算法：以 $Work = (2, 3, 0)$ 出發，可依序執行 $P_1 \to P_3 \to P_4 \to P_0 \to P_2$，維持安全序列 $\langle P_1, P_3, P_4, P_0, P_2 \rangle$。</li>
+                <li><strong>結論：假裝分配後系統仍為安全狀態，可以立即批准分配！</strong></li>
+              </ul>
+
+              <p><strong>2. 承上，$P_1$ 獲批後（$Available = (2, 3, 0)$）之後續請求：</strong></p>
+              <ul style="margin-left: 1.5rem;">
+                <li><strong>$P_4$ 提出 $Request_4 = (3, 3, 0)$：</strong> 資源 $A$ 需要 3 個，但目前 $Available$ 僅剩 2 個（$3 > 2$），可用資源不足，<strong>無法批准，行程 $P_4$ 必須等待</strong>。</li>
+                <li><strong>$P_0$ 提出 $Request_0 = (0, 2, 0)$：</strong> $Request_0 \le Need_0(7, 4, 3)$ 且 $Request_0 \le Available(2, 3, 0)$，經安全演算法驗證可維持安全狀態，<strong>可以批准分配</strong>。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 題目二：多重實例死結偵測題 -->
+        <div style="margin-top: 1.5rem;">
+          <h3 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 0.5rem;">【大題二】多重實例死結偵測演算法（教材範例 2）</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+            系統中有 5 個行程（$P_0 \sim P_4$）與 3 種資源（$A = 7, B = 2, C = 6$）。在時間點 $T_0$ 的配置與請求矩陣如下：
+          </p>
+
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>行程</th>
+                  <th>已分配 Allocation (A B C)</th>
+                  <th>當前請求 Request (A B C)</th>
+                  <th>系統可用 Available (A B C)</th>
+                  <th>執行判定與資源回收</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>P0</strong></td>
+                  <td>0 1 0</td>
+                  <td>0 0 0</td>
+                  <td rowspan="5" style="vertical-align: middle; font-weight: 700; color: var(--accent-rose); text-align: center;">
+                    Available = (0, 0, 0)<br/>
+                    <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">
+                      A: 7 - 7 = 0<br/>
+                      B: 2 - 2 = 0<br/>
+                      C: 6 - 6 = 0
+                    </span>
+                  </td>
+                  <td>$Request_0(0, 0, 0) \le (0, 0, 0) \implies$ 釋放得 $Work = \mathbf{(0, 1, 0)}$</td>
+                </tr>
+                <tr>
+                  <td><strong>P1</strong></td>
+                  <td>2 0 0</td>
+                  <td>2 0 2</td>
+                  <td>等待 $Work$ 累積至 $(5, 2, 4)$ 後執行，釋放得 $Work = \mathbf{(7, 2, 4)}$</td>
+                </tr>
+                <tr>
+                  <td><strong>P2</strong></td>
+                  <td>3 0 3</td>
+                  <td>0 0 0</td>
+                  <td>$Request_2(0, 0, 0) \le (0, 1, 0) \implies$ 釋放得 $Work = \mathbf{(3, 1, 3)}$</td>
+                </tr>
+                <tr>
+                  <td><strong>P3</strong></td>
+                  <td>2 1 1</td>
+                  <td>1 0 0</td>
+                  <td>$Request_3(1, 0, 0) \le (3, 1, 3) \implies$ 釋放得 $Work = \mathbf{(5, 2, 4)}$</td>
+                </tr>
+                <tr>
+                  <td><strong>P4</strong></td>
+                  <td>0 0 2</td>
+                  <td>0 0 2</td>
+                  <td>$Request_4(0, 0, 2) \le (7, 2, 4) \implies$ 釋放得 $Work = \mathbf{(7, 2, 6)}$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; margin-top: 1rem;">
+            <h4 style="color: var(--accent-amber); font-size: 0.95rem; margin-bottom: 0.5rem;">死結狀態變化分析</h4>
+            <div style="font-size: 0.9rem; line-height: 1.8; color: var(--text-light);">
+              <p><strong>1. $T_0$ 時間點偵測結果：</strong></p>
+              <p>依序執行 $P_0 \to P_2 \to P_3 \to P_1 \to P_4$。所有行程之 $Finish[i] = true$，<strong>系統在 $T_0$ 未發生死結</strong>，執行完畢序列為 $\langle P_0, P_2, P_3, P_1, P_4 \rangle$。</p>
+              
+              <p style="margin-top: 0.5rem;"><strong>2. 若行程 $P_2$ 額外提出請求 $Request_2 = (0, 0, 1)$：</strong></p>
+              <ul style="margin-left: 1.5rem;">
+                <li>此時 $P_2$ 之請求由 $(0, 0, 0)$ 變為 $(0, 0, 1)$。</li>
+                <li>初始 $Work = (0, 0, 0)$，全系統僅有 $P_0$ 滿足 $Request \le Work$。$P_0$ 完成後釋放資源得 $Work = (0, 1, 0)$。</li>
+                <li>此時 $Work = (0, 1, 0)$ 無法滿足任何其餘行程：$P_1(2, 0, 2)$、$P_2(0, 0, 1)$、$P_3(1, 0, 0)$、$P_4(0, 0, 2)$ 皆因資源不足無法執行。</li>
+                <li><strong>結論：系統陷入死結狀態，陷入死結的行程集合為 $\{P_1, P_2, P_3, P_4\}$！</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 考點七：期中高頻數值計算實戰演練專區（Midterm Numerical Calculation Lab） -->
+      <div class="card" style="margin-top: 1.5rem;" id="card-calc-lab">
+        <div class="card-title">
+          <span>考點七：期中高頻數值計算實戰實驗室（Midterm Numerical Calculation Lab）</span>
+          <span class="badge badge-tag" style="background-color: var(--accent-cyan); color: #0f172a; font-weight: 700;">八大高頻題型</span>
+        </div>
+        <div class="alert-box info">
+          <strong>計算題突破核心：</strong> 作業系統期中考涵蓋八大高頻數值運算與圖形推導題型。點選下方分類與標籤切換題型，點擊「隨機產生題組」即可反覆刷題，支援自主填寫數值並即時驗證與展開完整公式推導！
+        </div>
+
+        <!-- 題型大類切換器 -->
+        <div class="calc-cat-bar">
+          <button class="calc-cat-btn active" id="btn-calc-cat-num">【數值運算專題】（5 大核心題型）</button>
+          <button class="calc-cat-btn" id="btn-calc-cat-graph">【圖形推導與同步演算法】（3 大進階題型）</button>
+        </div>
+
+        <!-- 題型切換按鈕群：數值運算組 -->
+        <div class="calc-nav-tabs" id="calc-nav-group-num">
+          <button class="calc-nav-btn active" id="btn-calc-tab-deadlock">1. 死結臨界最少資源數 ($M \ge n(m-1)+1$)</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-semaphore">2. 信號量（Semaphore）計數與阻塞推算</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-buffer">3. 環狀緩衝區（Bounded-Buffer）指標與空間</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-exp">4. SJF 指數平滑法 CPU 預測 ($\tau_{n+1}$)</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-quantum">5. 時間量子與 Context Switch 開銷</button>
+        </div>
+
+        <!-- 題型切換按鈕群：圖形推導組 -->
+        <div class="calc-nav-tabs" id="calc-nav-group-graph" style="display: none;">
+          <button class="calc-nav-btn" id="btn-calc-tab-rag">6. 資源配置圖（RAG）死結判定</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-fork">7. fork() 行程樹與子行程數計算</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-cs">8. 臨界區間問題（Critical Section）三準則除錯</button>
+        </div>
+
+        <!-- 模組 1：死結臨界最少資源數 -->
+        <div class="calc-panel" id="calc-panel-deadlock">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型一】死結防範之最少資源總數臨界推導（鴿籠原理應用）</span>
+            <button class="btn btn-primary" id="btn-gen-calc-deadlock">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「公式速查與核心推導原則」</span>
+            <div class="calc-formula-content">
+              <strong>通用公式：</strong> $M \ge \sum (Max_i - 1) + 1$ 或均勻需求 $M \ge n(m - 1) + 1$。<br/>
+              <strong>鴿籠原理破局：</strong> 最差卡死狀態為每個行程均持有 $Max_i - 1$ 個資源等待最後 1 個，系統只要多提供 1 個資源即可促成至少一個行程完成並歸還。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-deadlock-text">載入中...</div>
+          <div class="calc-input-group">
+            <label style="font-weight: 600;" id="calc-deadlock-input-label">你的推算答案：</label>
+            <input type="number" class="calc-input" id="calc-deadlock-input" placeholder="請輸入整數">
+            <button class="btn btn-primary" id="btn-submit-calc-deadlock">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-deadlock"></div>
+        </div>
+
+        <!-- 模組 2：信號量（Semaphore）計數與阻塞推算 -->
+        <div class="calc-panel" id="calc-panel-semaphore" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型二】信號量（Counting Semaphore）計數值與阻塞佇列狀態推算</span>
+            <button class="btn btn-primary" id="btn-gen-calc-semaphore">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「信號量狀態公式速查」</span>
+            <div class="calc-formula-content">
+              <strong>最終數值：</strong> $S = S_0 - W + V$（$W$ 為 wait/P 次數，$V$ 為 signal/V 次數）。<br/>
+              <strong>物理語意：</strong> 若 $S \ge 0$，代表可用資源尚餘 $S$ 個，等待佇列為 $0$；若 $S < 0$，可用資源為 $0$，被阻塞於等待佇列之行程數為 $|S|$ 個。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-semaphore-text">載入中...</div>
+          <div class="calc-input-group" style="gap: 1.5rem;">
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">1. 最終信號量數值 $S$：</label>
+              <input type="number" class="calc-input" id="calc-semaphore-input-val" placeholder="可為負數">
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">2. 處於阻塞狀態之行程數：</label>
+              <input type="number" class="calc-input" id="calc-semaphore-input-blocked" placeholder="個數 (>=0)">
+            </div>
+            <button class="btn btn-primary" id="btn-submit-calc-semaphore" style="align-self: flex-end;">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-semaphore"></div>
+        </div>
+
+        <!-- 模組 3：環狀緩衝區指標與空位推算 -->
+        <div class="calc-panel" id="calc-panel-buffer" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型三】環狀有界限緩衝區（Bounded-Buffer）指標與儲存容量推算</span>
+            <button class="btn btn-primary" id="btn-gen-calc-buffer">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「有界限緩衝區關鍵公式」</span>
+            <div class="calc-formula-content">
+              <strong>項目數量：</strong> $\text{Count} = (in - out + BUFFER\_SIZE) \bmod BUFFER\_SIZE$。<br/>
+              <strong>剩餘空位：</strong> $\text{Free} = (BUFFER\_SIZE - 1) - \text{Count}$（保留一格以區隔空與滿）。<br/>
+              <strong>全空條件：</strong> $in == out$；<strong>全滿條件：</strong> $(in + 1) \bmod BUFFER\_SIZE == out$。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-buffer-text">載入中...</div>
+          <div class="calc-input-group" style="gap: 1.5rem;">
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">1. 目前儲存有效項目數：</label>
+              <input type="number" class="calc-input" id="calc-buffer-input-count" placeholder="整數">
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">2. 剩餘可連續寫入空位數：</label>
+              <input type="number" class="calc-input" id="calc-buffer-input-free" placeholder="整數">
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">3. 當前緩衝區狀態判定：</label>
+              <select class="calc-input" id="calc-buffer-select-status" style="width: 160px;">
+                <option value="normal">正常存放狀態</option>
+                <option value="full">緩衝區已全滿</option>
+                <option value="empty">緩衝區為全空</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btn-submit-calc-buffer" style="align-self: flex-end;">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-buffer"></div>
+        </div>
+
+        <!-- 模組 4：指數平滑法 CPU 預測 -->
+        <div class="calc-panel" id="calc-panel-exp" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型四】SJF 排程下一次 CPU 區間預測（指數平滑法 Exponential Smoothing）</span>
+            <button class="btn btn-primary" id="btn-gen-calc-exp">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「指數平滑法遞推公式」</span>
+            <div class="calc-formula-content">
+              <strong>遞推公式：</strong> $\tau_{n+1} = \alpha t_n + (1 - \alpha)\tau_n$。<br/>
+              $\alpha$ 為當前實際觀測權重比，$1 - \alpha$ 為過去累積預測值之衰減記憶比。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-exp-text">載入中...</div>
+          <div class="calc-input-group">
+            <label style="font-weight: 600;">預估值 $\tau_4$（毫秒，精確至小數點後 2 位）：</label>
+            <input type="number" step="0.01" class="calc-input" id="calc-exp-input" placeholder="例如 9.25">
+            <button class="btn btn-primary" id="btn-submit-calc-exp">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-exp"></div>
+        </div>
+
+        <!-- 模組 5：時間量子與 Context Switch 開銷 -->
+        <div class="calc-panel" id="calc-panel-quantum" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型五】輪轉排程（RR）時間量子、上下文切換次數與有效 CPU 佔比</span>
+            <button class="btn btn-primary" id="btn-gen-calc-quantum">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「排程切換開銷公式」</span>
+            <div class="calc-formula-content">
+              <strong>切換次數：</strong> $\lceil B / q \rceil - 1$（最後一個時間配額結束離開，不計切換）。<br/>
+              <strong>總耗時：</strong> $B + (\text{切換次數} \times CS)$；<strong>有效利用率：</strong> $\frac{B}{\text{總耗時}} \times 100\%$。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-quantum-text">載入中...</div>
+          <div class="calc-input-group" style="gap: 1.5rem;">
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">切換次數（次）：</label>
+              <input type="number" class="calc-input" id="calc-quantum-input-cs" placeholder="次數">
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">總執行耗時（ms）：</label>
+              <input type="number" class="calc-input" id="calc-quantum-input-total" placeholder="毫秒">
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">有效利用率（%）：</label>
+              <input type="number" step="0.1" class="calc-input" id="calc-quantum-input-util" placeholder="例如 92.5">
+            </div>
+            <button class="btn btn-primary" id="btn-submit-calc-quantum" style="align-self: flex-end;">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-quantum"></div>
+        </div>
+
+        <!-- 模組 6：資源配置圖（RAG）死結判定 -->
+        <div class="calc-panel" id="calc-panel-rag" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型六】資源配置圖（RAG）有向圖分析與死結存在性判定</span>
+            <button class="btn btn-primary" id="btn-gen-calc-rag">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「RAG 與等待圖判定法則」</span>
+            <div class="calc-formula-content">
+              <strong>單一資源實例：</strong> 有環（Cycle）$\iff$ 必死結（充要條件）。<br/>
+              <strong>多重資源實例：</strong> 有環為死結之必要非充分條件。若環外有行程持有資源且不需申請新資源，該行程完成釋放資源後可打破環路，<strong>不發生死結</strong>。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-rag-text">載入中...</div>
+          <div class="rag-svg-box" id="calc-rag-svg-container"></div>
+          <div class="calc-input-group" style="gap: 1.5rem;">
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">1. 此圖中是否存在環路（Cycle）？</label>
+              <div class="calc-choice-group">
+                <button class="calc-choice-btn" id="btn-rag-cycle-yes" onclick="app.selectRagChoice('cycle', true)">存在環路</button>
+                <button class="calc-choice-btn" id="btn-rag-cycle-no" onclick="app.selectRagChoice('cycle', false)">不存在環路</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">2. 系統此時是否處於死結狀態？</label>
+              <div class="calc-choice-group">
+                <button class="calc-choice-btn" id="btn-rag-deadlock-yes" onclick="app.selectRagChoice('deadlock', true)">是，已陷入死結</button>
+                <button class="calc-choice-btn" id="btn-rag-deadlock-no" onclick="app.selectRagChoice('deadlock', false)">否，未發生死結</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btn-submit-calc-rag" style="align-self: flex-end;" onclick="app.verifyCalcRAG()">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-rag"></div>
+        </div>
+
+        <!-- 模組 7：fork() 行程樹計算 -->
+        <div class="calc-panel" id="calc-panel-fork" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型七】fork() 系統呼叫行程樹與子行程生成數量推導</span>
+            <button class="btn btn-primary" id="btn-gen-calc-fork">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「fork() 行程計數公式與常考陷阱」</span>
+            <div class="calc-formula-content">
+              <strong>總行程數：</strong> $2^N$（包含最一開始的初始父行程本身）。<br/>
+              <strong>新建立子行程數：</strong> $2^N - 1$（必須扣除父行程）。<br/>
+              <strong>迴圈列印次數：</strong> 若每次 fork() 後立即印出，總列印次數為 $2^1 + 2^2 + \dots + 2^N = 2^{N+1} - 2$。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-fork-text">載入中...</div>
+          <div class="calc-input-group" id="calc-fork-input-container">
+            <!-- 動態填入 input 欄位 -->
+          </div>
+          <div class="calc-feedback" id="calc-feedback-fork"></div>
+        </div>
+
+        <!-- 模組 8：臨界區間問題（Critical Section）三準則除錯 -->
+        <div class="calc-panel" id="calc-panel-cs" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型八】臨界區間問題（Critical Section）同步演算法程式碼除錯</span>
+            <button class="btn btn-primary" id="btn-gen-calc-cs">隨機產生題組</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「臨界區間三大準則定義」</span>
+            <div class="calc-formula-content">
+              <strong>1. 互斥（Mutual Exclusion）：</strong> 臨界區間內最多僅能有 1 個行程執行。<br/>
+              <strong>2. 前進（Progress）：</strong> 無行程在臨界區間時，有意願者可競爭進入，選拔過程不得被無限推遲（不能死結或互相推諉）。<br/>
+              <strong>3. 有限等待（Bounded Waiting）：</strong> 申請進入後，其他行程被允許進入的次數必須有上限，避免特定行程飢餓（Starvation）。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-cs-text">載入中...</div>
+          <div class="calc-code-box" id="calc-cs-code-box">載入中...</div>
+          <div class="calc-input-group" style="width: 100%;">
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">分析上述程式碼，請問此同步演算法主要存在何種缺陷？違反了哪一準則？</label>
+            <div class="calc-choice-group" style="width: 100%;">
+              <button class="calc-choice-btn" id="btn-cs-opt-mutex" onclick="app.selectCsChoice('mutex')">違反互斥（Mutual Exclusion）</button>
+              <button class="calc-choice-btn" id="btn-cs-opt-progress" onclick="app.selectCsChoice('progress')">違反前進（Progress，引發死結或卡死）</button>
+              <button class="calc-choice-btn" id="btn-cs-opt-bounded" onclick="app.selectCsChoice('bounded')">違反有限等待（Bounded Waiting，特定行程飢餓）</button>
+              <button class="calc-choice-btn" id="btn-cs-opt-correct" onclick="app.selectCsChoice('correct')">完全正確，同時滿足三大準則</button>
+            </div>
+            <button class="btn btn-primary" id="btn-submit-calc-cs" style="margin-top: 0.75rem;" onclick="app.verifyCalcCS()">送出核對</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-cs"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: 甘特圖與排程計算器 -->
+    <section class="tab-content" id="tab-simulator">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">甘特圖與排程指標計算器</h1>
+          <p class="page-subtitle">支援 FCFS、SJF、SRTF、Round Robin 與 Priority 排程模擬，即時推導甘特圖與 Waiting Time</p>
+        </div>
+      </div>
+
+      <div class="alert-box">
+        <strong>期中考大題提示：</strong> 甘特圖為計算題核心，務必掌握各行程的 Completion Time、Turnaround Time（$TAT = C_i - A_i$）與 Waiting Time（$WT = TAT - B_i$）。
+      </div>
+
+      <div class="simulator-layout">
+        <!-- 左側控制面板 -->
+        <div class="sim-control-panel">
+          <div class="card">
+            <div class="card-title">考題與演算法設定</div>
+
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">載入教材經典題組：</label>
+              <select id="sim-preset-select" class="form-select"></select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">選擇排程演算法：</label>
+              <select id="sim-algo-select" class="form-select">
+                <option value="FCFS">先來先服務 (FCFS, 非搶占)</option>
+                <option value="SJF">最短工作優先 (SJF, 非搶占)</option>
+                <option value="SRTF">最短剩餘時間 (SRTF, 搶占式 SJF)</option>
+                <option value="RR">輪轉排程 (Round Robin, 搶占式)</option>
+                <option value="Priority">優先權排程 (Priority, 非搶占)</option>
+                <option value="Priority_Preempt">優先權排程 (Priority, 搶占式)</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="sim-quantum-wrap" style="display: none; margin-bottom: 0.75rem;">
+              <label class="form-label">時間量子 (Time Quantum q)：</label>
+              <input type="number" id="sim-quantum-input" class="form-control" value="4" min="1" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">行程列表（Arrival: 到達時間, Burst: CPU時間, Priority: 優先權數字越小越高）：</label>
+              <div style="overflow-x: auto;">
+                <table class="process-table-input">
+                  <thead>
+                    <tr>
+                      <th>行程</th>
+                      <th>到達 (A)</th>
+                      <th>執行 (B)</th>
+                      <th>優先</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="process-table-body"></tbody>
+                </table>
+              </div>
+              <button class="btn" id="btn-add-process" style="margin-top: 0.5rem; width: 100%;">+ 新增行程</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 1rem;">
+              <button class="btn btn-primary" id="btn-run-sim" style="flex: 1;">立即推導演算法</button>
+              <button class="btn" id="btn-reset-sim">重設題組</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側結果圖表與統計 -->
+        <div class="sim-result-panel">
+          <div class="card">
+            <div class="card-title">動態甘特圖可視化（Gantt Chart）</div>
+            <div id="gantt-chart-area" class="gantt-chart-container"></div>
+
+            <div class="card-title" style="margin-top: 1.5rem;">整體效能指標評估</div>
+            <div class="stats-grid" id="gantt-stats-summary"></div>
+
+            <div class="card-title" style="margin-top: 1.5rem;">各行程詳細數據結算清單</div>
+            <div style="overflow-x: auto;">
+              <table class="comparison-table">
+                <thead>
+                  <tr>
+                    <th>行程</th>
+                    <th>到達時間 ($A_i$)</th>
+                    <th>CPU Burst ($B_i$)</th>
+                    <th>完成時間 ($C_i$)</th>
+                    <th>週轉時間 ($TAT = C_i - A_i$)</th>
+                    <th>等待時間 ($WT = TAT - B_i$)</th>
+                    <th>回應時間 ($RT = Start - A_i$)</th>
+                  </tr>
+                </thead>
+                <tbody id="gantt-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: 期中考刷題庫 -->
+    <section class="tab-content" id="tab-quiz">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">期中考反覆刷題庫</h1>
+          <p class="page-subtitle">涵蓋單選題、情境推導題與觀念判斷題，作答即時反饋詳解並自動記錄錯題</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btn-reset-quiz">重新測驗（清空作答）</button>
+        </div>
+      </div>
+
+      <div class="quiz-filter-bar">
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+          <label class="form-label" style="white-space: nowrap;">篩選章節：</label>
+          <select id="quiz-chapter-select" class="form-select" style="min-width: 260px;">
+            <option value="all">全章節期中考題庫（綜合模擬）</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="quiz-list-container"></div>
+    </section>
+
+    <!-- Tab 5: 錯題專攻筆記本 -->
+    <section class="tab-content" id="tab-mistakes">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">錯題專攻筆記本</h1>
+          <p class="page-subtitle">針對過往測驗答錯之題目進行專屬強化複習，答對可標記移除</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-danger" id="btn-clear-mistakes">清空錯題紀錄</button>
+        </div>
+      </div>
+
+      <div id="mistakes-container"></div>
+    </section>
+
+    <!-- Tab 6: 觀念抽認卡 -->
+    <section class="tab-content" id="tab-flashcards">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">主動回想抽認卡（Active Recall）</h1>
+          <p class="page-subtitle">點擊卡片翻面檢視正解與直觀白話比喻，點擊按鈕標記熟練度</p>
+        </div>
+      </div>
+
+      <div class="flashcard-container">
+        <div class="flashcard" id="flashcard">
+          <span class="flashcard-badge" id="flashcard-chapter">CH1</span>
+          <span class="flashcard-tip">（點擊卡片任一處翻面）</span>
+          <div class="flashcard-content" id="flashcard-content">卡片內容載入中...</div>
+        </div>
+
+        <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;" id="flashcard-indicator">1 / 10</div>
+
+        <div class="flashcard-actions">
+          <button class="btn" id="btn-fc-prev">← 上一張</button>
+          <button class="btn" id="btn-fc-toggle-master">標記為已掌握</button>
+          <button class="btn btn-primary" id="btn-fc-next">下一張 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 7: 擴充管理中心 -->
+    <section class="tab-content" id="tab-extensions">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">擴充管理中心（彈性新增與備份）</h1>
+          <p class="page-subtitle">日後每上一堂新課程，可直接在此新增新章節（如 CH4 執行緒、CH5 同步）、新題目，並支援 JSON 完整備份</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-danger" id="btn-reset-all">恢復原始預設資料</button>
+        </div>
+      </div>
+
+      <div class="editor-grid">
+        <!-- 快速新增章節表單 -->
+        <div class="card">
+          <div class="card-title">新增課程章節與單元</div>
+          <form id="form-add-chapter">
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">章節全名（例如：CH4 執行緒與並行性）：</label>
+              <input type="text" id="new-ch-title" class="form-control" required placeholder="CH4 執行緒與並行性" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">期中/期末考特別提醒：</label>
+              <input type="text" id="new-ch-tips" class="form-control" placeholder="使用者執行緒 vs. 核心執行緒、多對一多對多模式" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">子單元標題（例如：一、 執行緒概述）：</label>
+              <input type="text" id="new-sec-title" class="form-control" required placeholder="一、 執行緒概述與優勢" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">子單元綱要概述：</label>
+              <input type="text" id="new-sec-summary" class="form-control" placeholder="說明為什麼需要 Thread 以及 Thread 的資源共享模式" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">重點名詞名稱：</label>
+              <input type="text" id="new-term-name" class="form-control" required placeholder="執行緒四大優勢" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">重點名詞詳細說明（支援換行）：</label>
+              <textarea id="new-term-desc" class="form-control" rows="4" placeholder="1. 回應性（Responsiveness）&#10;2. 資源共享（Resource Sharing）&#10;3. 經濟性（Economy）&#10;4. 可擴展性（Scalability）"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">儲存並加入系統</button>
+          </form>
+        </div>
+
+        <!-- 快速新增測驗題表單 -->
+        <div class="card">
+          <div class="card-title">新增測驗考題至題庫</div>
+          <form id="form-add-question">
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">所屬章節：</label>
+              <select id="new-q-chapter" class="form-select"></select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">題目敘述：</label>
+              <textarea id="new-q-text" class="form-control" rows="2" required placeholder="輸入題目內容..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label">選項 A：</label>
+              <input type="text" id="new-q-opt0" class="form-control" required placeholder="選項 A 內容" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label">選項 B：</label>
+              <input type="text" id="new-q-opt1" class="form-control" required placeholder="選項 B 內容" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label">選項 C：</label>
+              <input type="text" id="new-q-opt2" class="form-control" required placeholder="選項 C 內容" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label">選項 D：</label>
+              <input type="text" id="new-q-opt3" class="form-control" required placeholder="選項 D 內容" />
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">正確答案：</label>
+              <select id="new-q-ans" class="form-select">
+                <option value="0">選項 A</option>
+                <option value="1">選項 B</option>
+                <option value="2">選項 C</option>
+                <option value="3">選項 D</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">題解解析說明：</label>
+              <textarea id="new-q-exp" class="form-control" rows="3" placeholder="請詳細說明該題推導邏輯與課堂出題點..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">新增至題庫</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- JSON 匯入與匯出備份區 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>全系統 JSON 資料管理（備份與批次匯入）</span>
+          <div class="btn-group">
+            <button class="btn" id="btn-export-json">重新讀取當前資料</button>
+            <button class="btn" id="btn-copy-json">複製全部 JSON</button>
+            <button class="btn btn-success" id="btn-import-json">匯入套用下方 JSON</button>
+          </div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+          下方文字框為目前系統包含所有章節、記憶體階層定義、抽認卡與題庫之完整結構。你可以將此 JSON 複製存成檔案備份，或是貼上整理好的新章節 JSON 點擊「匯入套用」。
+        </p>
+        <textarea id="json-export-area" class="code-textarea" spellcheck="false"></textarea>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="footer">
+    <div>OS Master — 作業系統期中考互動複習系統 ｜ 適用於大學部作業系統期中考試衝刺</div>
+    <div style="font-size: 0.75rem; margin-top: 0.25rem;">支援本機離線運作，資料自動儲存於瀏覽器 LocalStorage</div>
+  </footer>
+
+  <!-- 腳本引入 -->
+  <script src="js/data.js"></script>
+  <script src="js/scheduler.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
