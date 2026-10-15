@@ -254,6 +254,25 @@ class OSMasterApp {
     this.calcFeedbackCS = document.getElementById('calc-feedback-cs');
 
     // 甘特圖排程器區
+    this.btnSchedModeDemo = document.getElementById('btn-sched-mode-demo');
+    this.btnSchedModePractice = document.getElementById('btn-sched-mode-practice');
+    this.schedPanelDemo = document.getElementById('sched-panel-demo');
+    this.schedPanelPractice = document.getElementById('sched-panel-practice');
+    this.schedPracticeAlgoSelect = document.getElementById('sched-practice-algo-select');
+    this.schedPracticeCountSelect = document.getElementById('sched-practice-count-select');
+    this.btnSchedPracticeGen = document.getElementById('btn-sched-practice-gen');
+    this.schedPracticeQHeader = document.getElementById('sched-practice-q-header');
+    this.schedPracticeQDesc = document.getElementById('sched-practice-q-desc');
+    this.schedPracticeThPriority = document.getElementById('sched-practice-th-priority');
+    this.schedPracticeGivenTbody = document.getElementById('sched-practice-given-tbody');
+    this.schedPracticeInputTbody = document.getElementById('sched-practice-input-tbody');
+    this.schedPracticeInputAwt = document.getElementById('sched-practice-input-awt');
+    this.schedPracticeInputAtat = document.getElementById('sched-practice-input-atat');
+    this.btnSchedPracticeVerify = document.getElementById('btn-sched-practice-verify');
+    this.btnSchedPracticeReveal = document.getElementById('btn-sched-practice-reveal');
+    this.btnSchedPracticeNext = document.getElementById('btn-sched-practice-next');
+    this.schedPracticeFeedback = document.getElementById('sched-practice-feedback');
+
     this.simPresetSelect = document.getElementById('sim-preset-select');
     this.simAlgoSelect = document.getElementById('sim-algo-select');
     this.simQuantumWrap = document.getElementById('sim-quantum-wrap');
@@ -371,6 +390,15 @@ class OSMasterApp {
     this.btnGenCalcCS?.addEventListener('click', () => this.generateCalcCS());
 
     // 甘特圖排程器
+    this.btnSchedModeDemo?.addEventListener('click', () => this.switchSchedulerMode('demo'));
+    this.btnSchedModePractice?.addEventListener('click', () => this.switchSchedulerMode('practice'));
+    this.btnSchedPracticeGen?.addEventListener('click', () => this.generateSchedulerPractice());
+    this.btnSchedPracticeNext?.addEventListener('click', () => this.generateSchedulerPractice());
+    this.btnSchedPracticeVerify?.addEventListener('click', () => this.verifySchedulerPractice());
+    this.btnSchedPracticeReveal?.addEventListener('click', () => this.revealSchedulerPracticeSolution());
+    this.schedPracticeAlgoSelect?.addEventListener('change', () => this.generateSchedulerPractice());
+    this.schedPracticeCountSelect?.addEventListener('change', () => this.generateSchedulerPractice());
+
     this.simPresetSelect?.addEventListener('change', (e) => this.loadPreset(e.target.value));
     this.simAlgoSelect?.addEventListener('change', (e) => {
       const isRR = e.target.value === 'RR';
@@ -2551,6 +2579,320 @@ do {
   }
 
   // ==========================================
+  // 期中甘特圖與數值手算實戰考場核心邏輯
+  // ==========================================
+  switchSchedulerMode(mode) {
+    this.currentSchedMode = mode;
+    if (mode === 'demo') {
+      this.btnSchedModeDemo?.classList.add('active');
+      this.btnSchedModePractice?.classList.remove('active');
+      if (this.schedPanelDemo) this.schedPanelDemo.style.display = 'block';
+      if (this.schedPanelPractice) this.schedPanelPractice.style.display = 'none';
+    } else {
+      this.btnSchedModePractice?.classList.add('active');
+      this.btnSchedModeDemo?.classList.remove('active');
+      if (this.schedPanelPractice) this.schedPanelPractice.style.display = 'block';
+      if (this.schedPanelDemo) this.schedPanelDemo.style.display = 'none';
+      if (!this.currentSchedPractice) {
+        this.generateSchedulerPractice();
+      }
+    }
+  }
+
+  generateSchedulerPractice() {
+    if (!this.schedPracticeGivenTbody || !this.schedPracticeInputTbody) return;
+
+    let selectedAlgo = this.schedPracticeAlgoSelect?.value || 'RANDOM';
+    const algoList = ['FCFS', 'SJF', 'SRTF', 'RR', 'Priority', 'Priority_Preempt'];
+    if (selectedAlgo === 'RANDOM') {
+      selectedAlgo = algoList[this.randInt(0, algoList.length - 1)];
+    }
+
+    const count = parseInt(this.schedPracticeCountSelect?.value, 10) || 4;
+    const isPriority = selectedAlgo === 'Priority' || selectedAlgo === 'Priority_Preempt';
+    const isRR = selectedAlgo === 'RR';
+    const quantum = isRR ? this.randInt(2, 4) : 2;
+
+    const algoNames = {
+      FCFS: '先來先服務（FCFS, 非搶占式）',
+      SJF: '最短工作優先（SJF, 非搶占式）',
+      SRTF: '最短剩餘時間優先（SRTF, 搶占式 SJF）',
+      RR: `輪轉排程（Round Robin, 時間量子 q = ${quantum}）`,
+      Priority: '優先權排程（Priority, 非搶占式，數字越小優先權越高）',
+      Priority_Preempt: '優先權排程（Priority, 搶占式，數字越小優先權越高）'
+    };
+
+    const procs = [];
+    let curArr = 0;
+    for (let i = 1; i <= count; i++) {
+      if (i > 1) {
+        curArr += this.randInt(1, 3);
+      }
+      procs.push({
+        id: `P${i}`,
+        arrival: curArr,
+        burst: this.randInt(2, 7),
+        priority: this.randInt(1, 4)
+      });
+    }
+
+    const simResult = OSScheduler.simulate(procs, selectedAlgo, quantum);
+
+    this.currentSchedPractice = {
+      algo: selectedAlgo,
+      algoName: algoNames[selectedAlgo],
+      quantum,
+      isPriority,
+      procs,
+      simResult
+    };
+
+    if (this.schedPracticeQHeader) {
+      this.schedPracticeQHeader.textContent = `當前考題排程演算法：${algoNames[selectedAlgo]}`;
+    }
+
+    if (this.schedPracticeQDesc) {
+      this.schedPracticeQDesc.innerHTML = `
+        系統已隨機產生 <strong>${count} 個行程</strong> 之排程參數。請根據 <strong>${algoNames[selectedAlgo]}</strong> 原則，在計算紙上畫出甘特圖，並推算各行程之完成時間（Completion Time $C_i$）、迴轉時間（Turnaround Time $TAT_i$）、等待時間（Waiting Time $WT_i$），以及全系統之平均等待時間與平均迴轉時間。
+      `;
+    }
+
+    if (this.schedPracticeThPriority) {
+      this.schedPracticeThPriority.style.display = isPriority ? '' : 'none';
+    }
+
+    let givenHtml = '';
+    procs.forEach(p => {
+      givenHtml += `
+        <tr>
+          <td><strong style="color:var(--primary);">${p.id}</strong></td>
+          <td>${p.arrival}</td>
+          <td>${p.burst}</td>
+          ${isPriority ? `<td style="color:var(--accent-amber); font-weight:700;">${p.priority}</td>` : ''}
+        </tr>
+      `;
+    });
+    this.schedPracticeGivenTbody.innerHTML = givenHtml;
+
+    let inputHtml = '';
+    procs.forEach(p => {
+      inputHtml += `
+        <tr id="sched-practice-row-${p.id}">
+          <td><strong style="color:var(--primary);">${p.id}</strong></td>
+          <td>${p.arrival}</td>
+          <td>${p.burst}</td>
+          <td>
+            <input type="number" class="sched-practice-input" id="sched-in-c-${p.id}" placeholder="整數" />
+            <span class="sched-sol-hint" id="sched-sol-c-${p.id}" style="display:none;"></span>
+          </td>
+          <td>
+            <input type="number" class="sched-practice-input" id="sched-in-tat-${p.id}" placeholder="整數" />
+            <span class="sched-sol-hint" id="sched-sol-tat-${p.id}" style="display:none;"></span>
+          </td>
+          <td>
+            <input type="number" class="sched-practice-input" id="sched-in-wt-${p.id}" placeholder="整數" />
+            <span class="sched-sol-hint" id="sched-sol-wt-${p.id}" style="display:none;"></span>
+          </td>
+        </tr>
+      `;
+    });
+    this.schedPracticeInputTbody.innerHTML = inputHtml;
+
+    if (this.schedPracticeInputAwt) this.schedPracticeInputAwt.value = '';
+    if (this.schedPracticeInputAtat) this.schedPracticeInputAtat.value = '';
+    if (this.schedPracticeFeedback) {
+      this.schedPracticeFeedback.style.display = 'none';
+      this.schedPracticeFeedback.innerHTML = '';
+    }
+
+    procs.forEach(p => {
+      ['c', 'tat', 'wt'].forEach(f => {
+        const inp = document.getElementById(`sched-in-${f}-${p.id}`);
+        inp?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.verifySchedulerPractice();
+        });
+      });
+    });
+
+    this.renderMath(this.schedPanelPractice);
+  }
+
+  verifySchedulerPractice() {
+    if (!this.currentSchedPractice || !this.schedPracticeFeedback) return;
+    const { procs, simResult } = this.currentSchedPractice;
+    const { processStats, avgWaiting, avgTurnaround, timeline, totalTime } = simResult;
+
+    let totalFields = procs.length * 3 + 2;
+    let correctCount = 0;
+
+    procs.forEach(p => {
+      const stat = processStats.find(s => s.id === p.id);
+      if (!stat) return;
+
+      const inC = document.getElementById(`sched-in-c-${p.id}`);
+      const inTAT = document.getElementById(`sched-in-tat-${p.id}`);
+      const inWT = document.getElementById(`sched-in-wt-${p.id}`);
+
+      const solC = document.getElementById(`sched-sol-c-${p.id}`);
+      const solTAT = document.getElementById(`sched-sol-tat-${p.id}`);
+      const solWT = document.getElementById(`sched-sol-wt-${p.id}`);
+
+      const checkField = (inputEl, solEl, expectedVal) => {
+        const userVal = parseInt(inputEl?.value, 10);
+        if (isNaN(userVal)) {
+          inputEl?.classList.remove('correct');
+          inputEl?.classList.add('incorrect');
+          if (solEl) {
+            solEl.style.display = 'block';
+            solEl.textContent = `正解: ${expectedVal}`;
+          }
+        } else if (userVal === expectedVal) {
+          correctCount++;
+          inputEl?.classList.remove('incorrect');
+          inputEl?.classList.add('correct');
+          if (solEl) solEl.style.display = 'none';
+        } else {
+          inputEl?.classList.remove('correct');
+          inputEl?.classList.add('incorrect');
+          if (solEl) {
+            solEl.style.display = 'block';
+            solEl.textContent = `正解: ${expectedVal}`;
+          }
+        }
+      };
+
+      checkField(inC, solC, stat.completion);
+      checkField(inTAT, solTAT, stat.turnaround);
+      checkField(inWT, solWT, stat.waiting);
+    });
+
+    const userAwt = parseFloat(this.schedPracticeInputAwt?.value);
+    const userAtat = parseFloat(this.schedPracticeInputAtat?.value);
+
+    const awtCorrect = !isNaN(userAwt) && Math.abs(userAwt - avgWaiting) <= 0.06;
+    const atatCorrect = !isNaN(userAtat) && Math.abs(userAtat - avgTurnaround) <= 0.06;
+
+    if (this.schedPracticeInputAwt) {
+      if (awtCorrect) {
+        correctCount++;
+        this.schedPracticeInputAwt.style.borderColor = 'var(--accent-emerald)';
+      } else {
+        this.schedPracticeInputAwt.style.borderColor = 'var(--accent-rose)';
+      }
+    }
+
+    if (this.schedPracticeInputAtat) {
+      if (atatCorrect) {
+        correctCount++;
+        this.schedPracticeInputAtat.style.borderColor = 'var(--accent-emerald)';
+      } else {
+        this.schedPracticeInputAtat.style.borderColor = 'var(--accent-rose)';
+      }
+    }
+
+    const isAllCorrect = correctCount === totalFields;
+
+    const colorMap = { 'IDLE': '#334155' };
+    const uniqueIds = procs.map(p => p.id);
+    uniqueIds.forEach((id, idx) => {
+      colorMap[id] = PROCESS_COLORS[idx % PROCESS_COLORS.length];
+    });
+
+    let barHtml = '<div class="gantt-bar-wrapper" style="min-width:480px;">';
+    timeline.forEach(seg => {
+      const duration = seg.end - seg.start;
+      const pct = (duration / totalTime) * 100;
+      const isIdle = seg.id === 'IDLE';
+      barHtml += `
+        <div class="gantt-block ${isIdle ? 'idle' : ''}" style="width: ${pct}%; background-color: ${colorMap[seg.id] || '#475569'};" title="${seg.id} [${seg.start} -> ${seg.end}]">
+          ${seg.id} (${duration})
+        </div>
+      `;
+    });
+    barHtml += '</div>';
+
+    let scaleHtml = '<div class="gantt-scale" style="min-width:480px;">';
+    scaleHtml += `<div class="gantt-scale-mark" style="left: 0%;">0</div>`;
+    timeline.forEach(seg => {
+      const posPct = (seg.end / totalTime) * 100;
+      scaleHtml += `<div class="gantt-scale-mark" style="left: ${posPct}%;">${seg.end}</div>`;
+    });
+    scaleHtml += '</div>';
+
+    let stepsHtml = timeline.map(seg => {
+      const duration = seg.end - seg.start;
+      if (seg.id === 'IDLE') {
+        return `<li>時段 $[${seg.start} \\to ${seg.end}]$（長度 ${duration}）：CPU 處於閒置狀態（IDLE），等待後續行程抵達。</li>`;
+      }
+      return `<li>時段 $[${seg.start} \\to ${seg.end}]$（長度 ${duration}）：調度執行 <strong>${seg.id}</strong>。</li>`;
+    }).join('');
+
+    let formulasHtml = processStats.map(s => {
+      return `
+        <li>
+          <strong>${s.id}</strong>：完成時間 $C = ${s.completion}$；迴轉時間 $TAT = C - A = ${s.completion} - ${s.arrival} = \\mathbf{${s.turnaround}}$；等待時間 $WT = TAT - B = ${s.turnaround} - ${s.burst} = \\mathbf{${s.waiting}}$。
+        </li>
+      `;
+    }).join('');
+
+    this.schedPracticeFeedback.style.display = 'block';
+    this.schedPracticeFeedback.className = `calc-feedback ${isAllCorrect ? 'correct' : 'incorrect'}`;
+    this.schedPracticeFeedback.innerHTML = `
+      <div style="font-weight:700; font-size:1.1rem; color:${isAllCorrect ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; margin-bottom:0.75rem;">
+        ${isAllCorrect
+          ? '【全數推算正確】太厲害了！你的甘特圖排程推導與各項數值計算 100% 正確！'
+          : `【核對完成】本次作答答對 ${correctCount} / ${totalFields} 格。請對照下方甘特圖與標準詳解修正錯誤欄位：`
+        }
+      </div>
+
+      <div style="background-color:rgba(0,0,0,0.25); border-radius:var(--radius-sm); padding:1rem; margin-bottom:1rem; border:1px solid rgba(255,255,255,0.06);">
+        <h4 style="color:var(--accent-cyan); font-size:0.95rem; margin-bottom:0.5rem;">標準甘特圖（Gantt Chart）：</h4>
+        <div class="gantt-chart-container" style="margin:0.5rem 0 1rem 0;">
+          ${barHtml + scaleHtml}
+        </div>
+
+        <h4 style="color:var(--accent-amber); font-size:0.95rem; margin-top:1rem; margin-bottom:0.35rem;">甘特圖執行區間拆解時序：</h4>
+        <ul style="margin-left:1.5rem; font-size:0.9rem; line-height:1.7; color:var(--text-light);">
+          ${stepsHtml}
+        </ul>
+
+        <h4 style="color:var(--accent-emerald); font-size:0.95rem; margin-top:1rem; margin-bottom:0.35rem;">各行程數值逐步推導：</h4>
+        <ul style="margin-left:1.5rem; font-size:0.9rem; line-height:1.7; color:var(--text-light);">
+          ${formulasHtml}
+        </ul>
+
+        <p style="margin-top:0.75rem; font-weight:700; color:var(--text-main);">
+          全系統平均等待時間 $AWT = \\frac{\\sum WT}{${procs.length}} = \\mathbf{${avgWaiting}}$ ms ｜ 全系統平均迴轉時間 $ATAT = \\frac{\\sum TAT}{${procs.length}} = \\mathbf{${avgTurnaround}}$ ms
+        </p>
+      </div>
+    `;
+
+    this.renderMath(this.schedPracticeFeedback);
+  }
+
+  revealSchedulerPracticeSolution() {
+    if (!this.currentSchedPractice) return;
+    const { procs, simResult } = this.currentSchedPractice;
+    const { processStats, avgWaiting, avgTurnaround } = simResult;
+
+    procs.forEach(p => {
+      const stat = processStats.find(s => s.id === p.id);
+      if (!stat) return;
+      const inC = document.getElementById(`sched-in-c-${p.id}`);
+      const inTAT = document.getElementById(`sched-in-tat-${p.id}`);
+      const inWT = document.getElementById(`sched-in-wt-${p.id}`);
+      if (inC) inC.value = stat.completion;
+      if (inTAT) inTAT.value = stat.turnaround;
+      if (inWT) inWT.value = stat.waiting;
+    });
+
+    if (this.schedPracticeInputAwt) this.schedPracticeInputAwt.value = avgWaiting;
+    if (this.schedPracticeInputAtat) this.schedPracticeInputAtat.value = avgTurnaround;
+
+    this.verifySchedulerPractice();
+  }
+
+  // ==========================================
   // Tab 4: 期中考反覆刷題庫 (Quiz Engine)
   // ==========================================
   renderQuiz() {
@@ -2946,6 +3288,7 @@ do {
     this.renderChapterNotes();
     this.renderMemoryPyramid();
     this.initSimulatorPresets();
+    this.generateSchedulerPractice();
     this.renderQuiz();
     this.renderFlashcard();
     this.initDeadlockChallenge();

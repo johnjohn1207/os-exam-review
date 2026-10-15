@@ -1133,7 +1133,7 @@ body {
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 導覽列：頂部品牌置頂，按鈕改為水平滑動列 */
+  /* 導覽列：頂部品牌置頂，按鈕改為橫向滑動列 */
   .navbar {
     padding: 0.5rem 0.75rem;
     flex-direction: column;
@@ -1297,7 +1297,7 @@ body {
     font-size: 1.15rem;
   }
 
-  /* 表格水平滾動防護 */
+  /* 表格橫向滾動防護 */
   .comparison-table, .matrix-table, .process-table-input {
     display: block;
     overflow-x: auto;
@@ -1323,6 +1323,63 @@ body {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
+}
+
+/* ==========================================================================
+   期中排程手算實戰考場專用樣式
+   ========================================================================== */
+.sched-practice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.sched-practice-table th, .sched-practice-table td {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.sched-practice-input {
+  width: 90px;
+  max-width: 100%;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  text-align: center;
+  padding: 0.35rem 0.5rem;
+  font-size: 16px; /* 防止 iOS Safari 縮放 */
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.sched-practice-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.sched-practice-input.correct {
+  border-color: var(--accent-emerald) !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  font-weight: 700;
+}
+
+.sched-practice-input.incorrect {
+  border-color: var(--accent-rose) !important;
+  background-color: rgba(244, 63, 94, 0.18) !important;
+  color: #fb7185 !important;
+  font-weight: 700;
+}
+
+.sched-sol-hint {
+  font-size: 0.75rem;
+  color: var(--accent-amber);
+  display: block;
+  margin-top: 0.2rem;
+  font-weight: 600;
 }
 
 

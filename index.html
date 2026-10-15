@@ -809,87 +809,207 @@
         <strong>期中考大題提示：</strong> 甘特圖為計算題核心，務必掌握各行程的 Completion Time、Turnaround Time（$TAT = C_i - A_i$）與 Waiting Time（$WT = TAT - B_i$）。
       </div>
 
-      <div class="simulator-layout">
-        <!-- 左側控制面板 -->
-        <div class="sim-control-panel">
-          <div class="card">
-            <div class="card-title">考題與演算法設定</div>
+      <!-- 排程模式切換器 -->
+      <div class="calc-cat-bar" style="margin-bottom: 1.25rem;">
+        <button class="calc-cat-btn active" id="btn-sched-mode-demo">【模式一】排程演算法動態視覺化演示器</button>
+        <button class="calc-cat-btn" id="btn-sched-mode-practice">【模式二】期中甘特圖與數值手算實戰考場（自主練習）</button>
+      </div>
 
-            <div class="form-group" style="margin-bottom: 0.75rem;">
-              <label class="form-label">載入教材經典題組：</label>
-              <select id="sim-preset-select" class="form-select"></select>
+      <!-- 模式一：排程演算法動態視覺化演示器 -->
+      <div id="sched-panel-demo">
+        <div class="simulator-layout">
+          <!-- 左側控制面板 -->
+          <div class="sim-control-panel">
+            <div class="card">
+              <div class="card-title">考題與演算法設定</div>
+
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label">載入教材經典題組：</label>
+                <select id="sim-preset-select" class="form-select"></select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label">選擇排程演算法：</label>
+                <select id="sim-algo-select" class="form-select">
+                  <option value="FCFS">先來先服務 (FCFS, 非搶占)</option>
+                  <option value="SJF">最短工作優先 (SJF, 非搶占)</option>
+                  <option value="SRTF">最短剩餘時間 (SRTF, 搶占式 SJF)</option>
+                  <option value="RR">輪轉排程 (Round Robin, 搶占式)</option>
+                  <option value="Priority">優先權排程 (Priority, 非搶占)</option>
+                  <option value="Priority_Preempt">優先權排程 (Priority, 搶占式)</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="sim-quantum-wrap" style="display: none; margin-bottom: 0.75rem;">
+                <label class="form-label">時間量子 (Time Quantum q)：</label>
+                <input type="number" id="sim-quantum-input" class="form-control" value="4" min="1" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">行程列表（Arrival: 到達時間, Burst: CPU時間, Priority: 優先權數字越小越高）：</label>
+                <div style="overflow-x: auto;">
+                  <table class="process-table-input">
+                    <thead>
+                      <tr>
+                        <th>行程</th>
+                        <th>到達 (A)</th>
+                        <th>執行 (B)</th>
+                        <th>優先</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="process-table-body"></tbody>
+                  </table>
+                </div>
+                <button class="btn" id="btn-add-process" style="margin-top: 0.5rem; width: 100%;">+ 新增行程</button>
+              </div>
+
+              <div class="btn-group" style="margin-top: 1rem;">
+                <button class="btn btn-primary" id="btn-run-sim" style="flex: 1;">立即推導演算法</button>
+                <button class="btn" id="btn-reset-sim">重設題組</button>
+              </div>
             </div>
+          </div>
 
-            <div class="form-group" style="margin-bottom: 0.75rem;">
+          <!-- 右側結果圖表與統計 -->
+          <div class="sim-result-panel">
+            <div class="card">
+              <div class="card-title">動態甘特圖可視化（Gantt Chart）</div>
+              <div id="gantt-chart-area" class="gantt-chart-container"></div>
+
+              <div class="card-title" style="margin-top: 1.5rem;">整體效能指標評估</div>
+              <div class="stats-grid" id="gantt-stats-summary"></div>
+
+              <div class="card-title" style="margin-top: 1.5rem;">各行程詳細數據結算清單</div>
+              <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>行程</th>
+                      <th>到達時間 ($A_i$)</th>
+                      <th>CPU Burst ($B_i$)</th>
+                      <th>完成時間 ($C_i$)</th>
+                      <th>週轉時間 ($TAT = C_i - A_i$)</th>
+                      <th>等待時間 ($WT = TAT - B_i$)</th>
+                      <th>回應時間 ($RT = Start - A_i$)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gantt-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式二：期中甘特圖與數值手算實戰考場（自主練習） -->
+      <div id="sched-panel-practice" style="display: none;">
+        <div class="card">
+          <div class="card-title">
+            <span>期中排程手算實戰考場：隨機題組與手算練習</span>
+            <span class="badge badge-tag">模擬真實考卷手算</span>
+          </div>
+
+          <!-- 考題控制列 -->
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; background: rgba(0,0,0,0.2); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <div style="flex: 1; min-width: 200px;">
               <label class="form-label">選擇排程演算法：</label>
-              <select id="sim-algo-select" class="form-select">
+              <select id="sched-practice-algo-select" class="form-select">
+                <option value="RANDOM">隨機抽考（全真模考隨機題）</option>
                 <option value="FCFS">先來先服務 (FCFS, 非搶占)</option>
                 <option value="SJF">最短工作優先 (SJF, 非搶占)</option>
                 <option value="SRTF">最短剩餘時間 (SRTF, 搶占式 SJF)</option>
                 <option value="RR">輪轉排程 (Round Robin, 搶占式)</option>
-                <option value="Priority">優先權排程 (Priority, 非搶占)</option>
-                <option value="Priority_Preempt">優先權排程 (Priority, 搶占式)</option>
+                <option value="Priority">優先權排程 (Priority, 非搶占，數字小優先)</option>
+                <option value="Priority_Preempt">優先權排程 (Priority, 搶占式，數字小優先)</option>
               </select>
             </div>
-
-            <div class="form-group" id="sim-quantum-wrap" style="display: none; margin-bottom: 0.75rem;">
-              <label class="form-label">時間量子 (Time Quantum q)：</label>
-              <input type="number" id="sim-quantum-input" class="form-control" value="4" min="1" />
+            <div style="width: 140px;">
+              <label class="form-label">行程數量：</label>
+              <select id="sched-practice-count-select" class="form-select">
+                <option value="3">3 個行程 (快速)</option>
+                <option value="4" selected>4 個行程 (期中標準)</option>
+                <option value="5">5 個行程 (進階挑戰)</option>
+              </select>
             </div>
+            <button class="btn btn-primary" id="btn-sched-practice-gen" style="height: 40px;">隨機產生新考題</button>
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">行程列表（Arrival: 到達時間, Burst: CPU時間, Priority: 優先權數字越小越高）：</label>
-              <div style="overflow-x: auto;">
-                <table class="process-table-input">
-                  <thead>
-                    <tr>
-                      <th>行程</th>
-                      <th>到達 (A)</th>
-                      <th>執行 (B)</th>
-                      <th>優先</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody id="process-table-body"></tbody>
-                </table>
-              </div>
-              <button class="btn" id="btn-add-process" style="margin-top: 0.5rem; width: 100%;">+ 新增行程</button>
-            </div>
-
-            <div class="btn-group" style="margin-top: 1rem;">
-              <button class="btn btn-primary" id="btn-run-sim" style="flex: 1;">立即推導演算法</button>
-              <button class="btn" id="btn-reset-sim">重設題組</button>
+          <!-- 公式速查與推導抽屜 -->
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開／收合「排程指標核心公式速查」</span>
+            <div class="calc-formula-content">
+              <strong>完成時間 ($C_i$)：</strong> 行程在 CPU 上徹底執行完畢並離開系統之時刻。<br/>
+              <strong>迴轉時間 ($TAT_i$)：</strong> $TAT_i = C_i - A_i$（完成時間扣除到達時間）。<br/>
+              <strong>等待時間 ($WT_i$)：</strong> $WT_i = TAT_i - B_i$（迴轉時間扣除實際執行所需 CPU Burst 時間）。<br/>
+              <strong>平均指標：</strong> $AWT = \frac{1}{n}\sum WT_i$；$ATAT = \frac{1}{n}\sum TAT_i$。<br/>
+              <strong>平手裁決規則：</strong> 若多個行程具有相同抵達時間且排程指標相同，依行程序號 $P_1 < P_2 < P_3 \dots$ 優先。
             </div>
           </div>
-        </div>
 
-        <!-- 右側結果圖表與統計 -->
-        <div class="sim-result-panel">
-          <div class="card">
-            <div class="card-title">動態甘特圖可視化（Gantt Chart）</div>
-            <div id="gantt-chart-area" class="gantt-chart-container"></div>
-
-            <div class="card-title" style="margin-top: 1.5rem;">整體效能指標評估</div>
-            <div class="stats-grid" id="gantt-stats-summary"></div>
-
-            <div class="card-title" style="margin-top: 1.5rem;">各行程詳細數據結算清單</div>
+          <!-- 當前考題題目卡片 -->
+          <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+            <div id="sched-practice-q-header" style="font-weight: 700; color: var(--accent-cyan); font-size: 1.05rem; margin-bottom: 0.5rem;">載入中...</div>
+            <div id="sched-practice-q-desc" style="font-size: 0.9rem; color: var(--text-light); line-height: 1.6; margin-bottom: 0.75rem;"></div>
             <div style="overflow-x: auto;">
-              <table class="comparison-table">
+              <table class="comparison-table" style="margin: 0;">
                 <thead>
                   <tr>
-                    <th>行程</th>
+                    <th>行程名稱</th>
                     <th>到達時間 ($A_i$)</th>
                     <th>CPU Burst ($B_i$)</th>
-                    <th>完成時間 ($C_i$)</th>
-                    <th>週轉時間 ($TAT = C_i - A_i$)</th>
-                    <th>等待時間 ($WT = TAT - B_i$)</th>
-                    <th>回應時間 ($RT = Start - A_i$)</th>
+                    <th id="sched-practice-th-priority">優先權 (Priority)</th>
                   </tr>
                 </thead>
-                <tbody id="gantt-table-body"></tbody>
+                <tbody id="sched-practice-given-tbody"></tbody>
               </table>
             </div>
           </div>
+
+          <!-- 學生手算作答區 -->
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="font-size: 0.95rem; color: var(--accent-amber); margin-bottom: 0.5rem;">自主手算填答區（請在紙上畫出甘特圖後，將數值填入下方格子中）：</h4>
+            <div style="overflow-x: auto;">
+              <table class="comparison-table sched-practice-table">
+                <thead>
+                  <tr>
+                    <th>行程</th>
+                    <th>到達 ($A_i$)</th>
+                    <th>執行 ($B_i$)</th>
+                    <th>完成時間 ($C_i$)</th>
+                    <th>迴轉時間 ($TAT_i$)</th>
+                    <th>等待時間 ($WT_i$)</th>
+                  </tr>
+                </thead>
+                <tbody id="sched-practice-input-tbody"></tbody>
+              </table>
+            </div>
+
+            <!-- 全系統平均值填寫 -->
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem; background: rgba(0,0,0,0.25); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); align-items: center;">
+              <div>
+                <label style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.25rem;">全系統平均等待時間 ($AWT$)：</label>
+                <input type="number" step="0.01" class="calc-input" id="sched-practice-input-awt" placeholder="例如 3.25" style="width: 140px;" />
+              </div>
+              <div>
+                <label style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.25rem;">全系統平均迴轉時間 ($ATAT$)：</label>
+                <input type="number" step="0.01" class="calc-input" id="sched-practice-input-atat" placeholder="例如 7.50" style="width: 140px;" />
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); align-self: flex-end; padding-bottom: 0.25rem;">
+                數值容許誤差 $\pm 0.05$（若為整數請直接輸入整數）。
+              </div>
+            </div>
+          </div>
+
+          <!-- 操作按鈕列 -->
+          <div class="btn-group" style="gap: 0.75rem; margin-bottom: 1rem;">
+            <button class="btn btn-primary" id="btn-sched-practice-verify" style="font-size: 0.95rem; padding: 0.6rem 1.5rem;">送出核對計算結果</button>
+            <button class="btn" id="btn-sched-practice-reveal">一鍵查看標準答案</button>
+            <button class="btn" id="btn-sched-practice-next">換下一道隨機考題</button>
+          </div>
+
+          <!-- 核對回饋與甘特圖詳解容器 -->
+          <div id="sched-practice-feedback" style="display: none;"></div>
         </div>
       </div>
     </section>
