@@ -10,7 +10,7 @@ const PROCESS_COLORS = [
 
 class OSMasterApp {
   constructor() {
-    this.storageKey = 'OS_MASTER_DATA_V3';
+    this.storageKey = 'OS_MASTER_DATA_V4';
     this.progressKey = 'OS_MASTER_PROGRESS_V1';
     this.data = this.loadData();
     this.progress = this.loadProgress();
@@ -744,36 +744,14 @@ class OSMasterApp {
   }
 
   formatMath(text) {
-    if (!text) return '';
-    // 將 LaTeX 數學標記替換為語意化 HTML 數學標籤
-    return text.replace(/\$([^\$]+)\$/g, (match, expr) => {
-      let s = expr;
-      s = s.replace(/\\mathbf\{([^}]+)\}/g, '<strong>$1</strong>');
-      s = s.replace(/\\textbf\{([^}]+)\}/g, '<strong>$1</strong>');
-      s = s.replace(/\\mathit\{([^}]+)\}/g, '<em>$1</em>');
-      s = s.replace(/\\dots/g, '…');
-      s = s.replace(/\\langle/g, '⟨').replace(/\\rangle/g, '⟩');
-      s = s.replace(/\\to/g, ' → ');
-      s = s.replace(/\\implies/g, ' ⇒ ');
-      s = s.replace(/\\le\b|\\leq\b/g, ' ≤ ');
-      s = s.replace(/\\ge\b|\\geq\b/g, ' ≥ ');
-      s = s.replace(/\\ne\b|\\neq\b/g, ' ≠ ');
-      s = s.replace(/\\times/g, ' × ');
-      s = s.replace(/\\sim/g, ' ~ ');
-      s = s.replace(/\\mathbb\{N\}/g, 'ℕ');
-      s = s.replace(/\\\{/g, '{').replace(/\\\}/g, '}');
-      s = s.replace(/([A-Za-z0-9]+)_\{([^}]+)\}/g, '$1<sub>$2</sub>');
-      s = s.replace(/([A-Za-z0-9]+)_([0-9A-Za-z]+)/g, '$1<sub>$2</sub>');
-      s = s.replace(/([A-Za-z0-9\)⟩\]]+)\^\{([^}]+)\}/g, '$1<sup>$2</sup>');
-      s = s.replace(/([A-Za-z0-9\)⟩\]]+)\^([0-9A-Za-z]+)/g, '$1<sup>$2</sup>');
-      return `<span class="math-expr">${s}</span>`;
-    });
+    // 保留原始 LaTeX 標記（$$ 與 $），交由 KaTeX 官方向量排版引擎渲染
+    return text || '';
   }
 
   formatDescription(text) {
     if (!text) return '';
-    const formatted = this.formatMath(text);
-    return formatted.replace(/\n/g, '<br/>');
+    // 將純文字換行轉換為 <br/>，完整保留 LaTeX 公式標記
+    return text.replace(/\n/g, '<br/>');
   }
 
   // ==========================================
@@ -2586,6 +2564,7 @@ do {
   // 全域公式渲染處理 (KaTeX + 離線回退)
   // ==========================================
   renderMath(root = document.body) {
+    if (!root) return;
     if (window.renderMathInElement) {
       try {
         window.renderMathInElement(root, {
@@ -2593,6 +2572,7 @@ do {
             { left: '$$', right: '$$', display: true },
             { left: '$', right: '$', display: false }
           ],
+          ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
           throwOnError: false
         });
         return;
@@ -2600,7 +2580,7 @@ do {
         console.warn('KaTeX render error:', e);
       }
     }
-    // 離線回退替換
+    // 僅在完全無 KaTeX 時才進行安全純文字回退替換
     this.fallbackMathRender(root);
   }
 
@@ -3701,4 +3681,9 @@ do {
 let app;
 document.addEventListener('DOMContentLoaded', () => {
   app = new OSMasterApp();
+});
+window.addEventListener('load', () => {
+  if (app && window.renderMathInElement) {
+    app.renderMath(document.body);
+  }
 });
