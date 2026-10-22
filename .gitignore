@@ -1,0 +1,7 @@
+# 系統暫存與開發輔助腳本
+desktop.ini
+scratch/
+
+# 大型二進位參考檔案
+*.pdf
+*.ppt

@@ -23,6 +23,7 @@
       <button class="nav-btn" data-tab="exam-focal">高頻考點演練</button>
       <button class="nav-btn" data-tab="simulator">甘特圖排程計算器</button>
       <button class="nav-btn" data-tab="quiz">期中考刷題庫</button>
+      <button class="nav-btn" data-tab="essay">期中非選問答庫</button>
       <button class="nav-btn" data-tab="mistakes">錯題專攻本</button>
       <button class="nav-btn" data-tab="flashcards">觀念抽認卡</button>
       <button class="nav-btn" data-tab="extensions">擴充管理中心</button>
@@ -52,6 +53,10 @@
       <div class="stat-item">
         <span class="stat-label">抽認卡掌握進度</span>
         <span class="stat-value" id="stat-flashcards" style="color: var(--accent-emerald);">0 張已掌握</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">非選大題掌握進度</span>
+        <span class="stat-value" id="stat-essays" style="color: var(--accent-cyan);">0 題已掌握</span>
       </div>
     </section>
 
@@ -537,6 +542,139 @@
       </div>
 
       <!-- 考點七：期中高頻數值計算實戰演練專區（Midterm Numerical Calculation Lab） -->
+      
+      <!-- 考點八：執行緒 vs. 行程 記憶體資源劃分矩陣 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>考點八：執行緒 vs. 行程 記憶體資源配置與共享深度矩陣（Thread vs. Process Memory Sharing）</span>
+          <span class="badge badge-tag">CH4 核心命題</span>
+        </div>
+        <div class="alert-box info">
+          <strong>課堂問答核心：</strong> 同一行程內的多個執行緒（Threads）共享哪些資源？各執行緒各自獨立擁有之私有資源為何？建立與切換之開銷對比。
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th style="min-width: 140px;">比較維度</th>
+                <th style="min-width: 220px;">同行程執行緒「完全共享」之資源</th>
+                <th style="min-width: 220px;">各執行緒「各自私有獨立」之資源</th>
+                <th style="min-width: 200px;">行程（Process）vs. 執行緒（Thread）開銷對比</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>記憶體區段<br/>(Memory Segments)</strong></td>
+                <td>
+                  1. <strong>程式碼區段（Code / Text Section）</strong>：所有執行緒共享相同的編譯機器指令。<br/>
+                  2. <strong>資料區段（Data Section）</strong>：共享全域變數（Global Variables）與靜態變數。<br/>
+                  3. <strong>堆積區段（Heap Section）</strong>：共享動態配置記憶體（如 <code>malloc</code> / <code>new</code> 空間）。
+                </td>
+                <td>
+                  1. <strong>堆疊區段（Stack Section）</strong>：每個執行緒各自擁有獨立的堆疊，保存各自的函式呼叫框架（Call Frames）、區域變數（Local Variables）與返回位址。<br/>
+                  2. 確保多個執行緒同時執行不同函式時呼叫歷程互不干擾。
+                </td>
+                <td>
+                  - <strong>行程建立：</strong> 屬於重量級（Heavy-weight），需複製整個位址空間與頁表。<br/>
+                  - <strong>執行緒建立：</strong> 屬於輕量級（Light-weight），僅需配置堆疊與暫存器結構，成本低廉。
+                </td>
+              </tr>
+              <tr>
+                <td><strong>CPU 執行狀態<br/>(Execution State)</strong></td>
+                <td>
+                  - 共享相同的行程層級排程屬性與群組權限。
+                </td>
+                <td>
+                  1. <strong>執行緒識別碼（Thread ID, TID）</strong>：唯一識別碼。<br/>
+                  2. <strong>程式計數器（Program Counter, PC）</strong>：記錄各執行緒目前正在執行的指令記憶體位址。<br/>
+                  3. <strong>暫存器集合（Register Set）</strong>：記錄各自運算中之整數、浮點與條件旗標暫存器值。
+                </td>
+                <td>
+                  - <strong>行程上下文切換：</strong> 需切換頁目錄指標（CR3 / Page Table）並刷新快取（TLB Flush），開銷巨大。<br/>
+                  - <strong>執行緒上下文切換：</strong> 無需置換虛擬位址空間與快取，僅需保存與還原暫存器及堆疊指標，開銷極低。
+                </td>
+              </tr>
+              <tr>
+                <td><strong>作業系統與 I/O 資源<br/>(OS Resources)</strong></td>
+                <td>
+                  1. <strong>開啟檔案清單（Open Files）</strong>：任一執行緒開啟或關閉檔案，其他執行緒立即共享變更。<br/>
+                  2. <strong>信號處置（Signal Handlers）</strong>：共享相同的信號註冊常式。<br/>
+                  3. <strong>網路 Socket 與子行程集合</strong>：行程層級之網路連線與子行程關聯。
+                </td>
+                <td>
+                  - <strong>信號遮罩（Signal Mask）</strong>：部分系統允許各執行緒獨立設定遮蔽特定信號。<br/>
+                  - <strong>執行緒專用儲存區（Thread-Local Storage, TLS）</strong>：程式定義之執行緒私有靜態變數。
+                </td>
+                <td>
+                  - <strong>通訊效率：</strong> 行程間通訊（IPC）需呼叫 System Call 或映射共享記憶體；執行緒天生共享全域記憶體與堆積，直接讀寫即可通訊（但需自行維護互斥鎖定防範 Race Condition）。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 考點九：三大多執行緒模型全維度深度對照 -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">
+          <span>考點九：三大多執行緒模型全維度深度對照（Multithreading Models Comparison）</span>
+          <span class="badge badge-tag">名詞架構必考</span>
+        </div>
+        <div class="alert-box info">
+          <strong>課堂問答核心：</strong> 多對一、一對一與多對多三大模型在使用者執行緒與核心執行緒映射、阻斷處理、多核心平行能力與代表作業系統之完整橫向對比。
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th style="min-width: 140px;">比較面向</th>
+                <th style="min-width: 190px;">多對一模型 (Many-to-One)</th>
+                <th style="min-width: 210px;">一對一模型 (One-to-One)</th>
+                <th style="min-width: 210px;">多對多模型 (Many-to-Many)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>映射關係定義</strong></td>
+                <td>許多使用者執行緒映射至「單一核心執行緒」</td>
+                <td>每個使用者執行緒映射至「專屬獨立的核心執行緒」</td>
+                <td>許多使用者執行緒多工映射至「相同或較少數量的核心執行緒」</td>
+              </tr>
+              <tr>
+                <td><strong>管理層級與開銷</strong></td>
+                <td>由使用者空間執行緒函式庫管理，無需核心介入，建立與切換開銷極低</td>
+                <td>每建立一個使用者執行緒必須由核心建立一個核心執行緒，建立開銷較大</td>
+                <td>兼顧兩者：程式設計師在使用者層級建立執行緒，核心動態配置合適數量之核心執行緒</td>
+              </tr>
+              <tr>
+                <td><strong>單一執行緒阻塞行為<br/>(Blocking Behavior)</strong></td>
+                <td><strong>全體凍結</strong>：若任一執行緒發起阻塞式系統呼叫，核心將整個行程全部阻塞</td>
+                <td><strong>互不干擾</strong>：一個執行緒阻塞時，核心可獨立調度其他執行緒繼續執行</td>
+                <td><strong>彈性調度</strong>：一個執行緒阻塞時，核心可將其他就緒執行緒排程至其他可用核心執行緒</td>
+              </tr>
+              <tr>
+                <td><strong>多核心真平行能力<br/>(Multicore Parallelism)</strong></td>
+                <td><strong>無法平行</strong>：由於核心一次只能排程一個核心執行緒，多核心硬體無法同時平行執行</td>
+                <td><strong>完全真平行</strong>：多個執行緒可在不同 CPU 核心上同時真正平行運轉</td>
+                <td><strong>完全真平行</strong>：多個核心執行緒可由 OS 分派給不同 CPU 核心平行執行</td>
+              </tr>
+              <tr>
+                <td><strong>執行緒數量限制</strong></td>
+                <td>程式可任意建立極大量使用者執行緒，完全不受核心資源限制</td>
+                <td>受限於核心記憶體與系統配額，作業系統通常會限制行程能建立的執行緒上限</td>
+                <td>使用者可隨意建立大量執行緒，核心執行緒數量則由系統負載最佳化控制</td>
+              </tr>
+              <tr>
+                <td><strong>主流代表系統</strong></td>
+                <td>Solaris Green Threads、GNU Portable Threads（目前極少現代系統採用）</td>
+                <td><strong>Linux、Windows（NT/2000/XP/7/10/11）、Solaris 9+</strong>（現代通用作業系統之絕對主流！）</td>
+                <td>Solaris 8 以前版本、IRIX、HP-UX、Tru64 UNIX（支援雙層 Two-level Model）</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="card" style="margin-top: 1.5rem;" id="card-calc-lab">
         <div class="card-title">
           <span>考點七：期中高頻數值計算實戰實驗室（Midterm Numerical Calculation Lab）</span>
@@ -548,7 +686,7 @@
 
         <!-- 題型大類切換器 -->
         <div class="calc-cat-bar">
-          <button class="calc-cat-btn active" id="btn-calc-cat-num">【數值運算專題】（5 大核心題型）</button>
+          <button class="calc-cat-btn active" id="btn-calc-cat-num">【數值運算專題】（6 大核心題型）</button>
           <button class="calc-cat-btn" id="btn-calc-cat-graph">【圖形推導與同步演算法】（3 大進階題型）</button>
         </div>
 
@@ -559,6 +697,7 @@
           <button class="calc-nav-btn" id="btn-calc-tab-buffer">3. 環狀緩衝區（Bounded-Buffer）指標與空間</button>
           <button class="calc-nav-btn" id="btn-calc-tab-exp">4. SJF 指數平滑法 CPU 預測 ($\tau_{n+1}$)</button>
           <button class="calc-nav-btn" id="btn-calc-tab-quantum">5. 時間量子與 Context Switch 開銷</button>
+          <button class="calc-nav-btn" id="btn-calc-tab-amdahl">6. 阿姆達爾定律（Amdahl's Law）多核心加速比</button>
         </div>
 
         <!-- 題型切換按鈕群：圖形推導組 -->
@@ -708,6 +847,33 @@
           </div>
           <div class="calc-feedback" id="calc-feedback-quantum"></div>
         </div>
+        <!-- 題型六：阿姆達爾定律多核心加速比推導 -->
+        <div class="calc-panel" id="calc-panel-amdahl" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span style="font-weight: 700; color: var(--primary);">【題型六】阿姆達爾定律（Amdahl's Law）多核心加速比推導</span>
+            <button class="btn btn-primary" id="btn-gen-calc-amdahl">隨機出題</button>
+          </div>
+          <div class="calc-formula-accordion" onclick="this.querySelector('.calc-formula-content').classList.toggle('show')">
+            <span>點擊展開【阿姆達爾定律核心公式】</span>
+            <div class="calc-formula-content">
+              <strong>加速比核心公式：</strong> $\\text{Speedup} \\le \\frac{1}{S + \\frac{1 - S}{N}}$<br/>
+              - $S$：程式中必須「循序執行（Serial portion）」的比例（$0 \\le S \\le 1$）。<br/>
+              - $1 - S$：可「平行化處理（Parallel portion）」的比例。<br/>
+              - $N$：處理器核心數量（Processing Cores）。<br/>
+              <strong>理論加速比極限（$N \\to \\infty$）：</strong> $\\lim_{N \\to \\infty} \\text{Speedup} = \\frac{1}{S}$。
+            </div>
+          </div>
+          <div class="calc-q-box" id="calc-q-amdahl-text">載入中...</div>
+          <div class="calc-input-group" style="gap: 1.5rem;">
+            <div>
+              <label style="font-weight: 600; display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">計算加速比 Speedup（倍，小數點後兩位）：</label>
+              <input type="number" step="0.01" class="calc-input" id="calc-amdahl-input" placeholder="例如：2.29" style="width: 170px;" />
+            </div>
+            <button class="btn btn-primary" id="btn-verify-calc-amdahl" style="align-self: flex-end; padding: 0.5rem 1.75rem;">核對答案</button>
+          </div>
+          <div class="calc-feedback" id="calc-feedback-amdahl" style="display: none;"></div>
+        </div>
+
 
         <!-- 模組 6：資源配置圖（RAG）死結判定 -->
         <div class="calc-panel" id="calc-panel-rag" style="display: none;">
@@ -1026,16 +1192,56 @@
         </div>
       </div>
 
-      <div class="quiz-filter-bar">
-        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+      <div class="quiz-filter-bar" style="flex-wrap: wrap; gap: 1rem; align-items: center;">
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-bottom: 0;">
           <label class="form-label" style="white-space: nowrap;">篩選章節：</label>
-          <select id="quiz-chapter-select" class="form-select" style="min-width: 260px;">
+          <select id="quiz-chapter-select" class="form-select" style="min-width: 240px;">
             <option value="all">全章節期中考題庫（綜合模擬）</option>
           </select>
+        </div>
+        <div class="filter-pill-group" id="quiz-category-pills">
+          <button class="filter-pill active" data-cat="all">全部題型 (<span id="count-quiz-all">0</span>)</button>
+          <button class="filter-pill" data-cat="calc">計算推導題 (<span id="count-quiz-calc">0</span>)</button>
+          <button class="filter-pill" data-cat="concept">觀念判斷題 (<span id="count-quiz-concept">0</span>)</button>
         </div>
       </div>
 
       <div id="quiz-list-container"></div>
+    </section>
+
+    <!-- Tab: 期中非選問答庫 -->
+    <section class="tab-content" id="tab-essay">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">期中非選問答與推導庫</h1>
+          <p class="page-subtitle">針對恐龍本分章習題與期中考高頻非選大題，提供破題關鍵思考、逐步公式演算推導與評分標準（Rubric）</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btn-toggle-all-essay-answers">展開／收合所有解答</button>
+        </div>
+      </div>
+
+      <div class="quiz-filter-bar" style="flex-wrap: wrap; gap: 1rem; align-items: center;">
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+          <label class="form-label" style="white-space: nowrap;">篩選章節：</label>
+          <select id="essay-chapter-select" class="form-select" style="min-width: 240px;">
+            <option value="all">全部章節 (CH1 ~ CH5)</option>
+          </select>
+        </div>
+
+        <div class="filter-pill-group" id="essay-category-pills">
+          <button class="filter-pill active" data-cat="all">全部類型 (<span id="count-essay-all">0</span>)</button>
+          <button class="filter-pill" data-cat="calc">綜合計算推導 (<span id="count-essay-calc">0</span>)</button>
+          <button class="filter-pill" data-cat="concept">名詞解釋與核心觀念 (<span id="count-essay-concept">0</span>)</button>
+          <button class="filter-pill" data-cat="design">架構設計與申論問答 (<span id="count-essay-design">0</span>)</button>
+        </div>
+
+        <div style="flex: 1; min-width: 220px;">
+          <input type="text" id="essay-search-input" class="search-input" placeholder="搜尋非選題關鍵字（如：銀行家、甘特圖、fork、即時排程、雙模式）..." style="margin-bottom: 0;" />
+        </div>
+      </div>
+
+      <div id="essay-list-container"></div>
     </section>
 
     <!-- Tab 5: 錯題專攻筆記本 -->

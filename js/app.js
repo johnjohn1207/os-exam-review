@@ -10,7 +10,7 @@ const PROCESS_COLORS = [
 
 class OSMasterApp {
   constructor() {
-    this.storageKey = 'OS_MASTER_DATA_V1';
+    this.storageKey = 'OS_MASTER_DATA_V2';
     this.progressKey = 'OS_MASTER_PROGRESS_V1';
     this.data = this.loadData();
     this.progress = this.loadProgress();
@@ -19,6 +19,11 @@ class OSMasterApp {
     this.currentFlashcardIdx = 0;
     this.flashcardIsFlipped = false;
     this.currentQuizFilter = 'all';
+    this.currentQuizCategoryFilter = 'all'; // 'all' | 'calc' | 'concept'
+    this.currentEssayChapterFilter = 'all';
+    this.currentEssayCategoryFilter = 'all'; // 'all' | 'calc' | 'concept' | 'design'
+    this.currentEssaySearch = '';
+    this.allEssayAnswersExpanded = false;
     this.currentPyramidMode = 'study'; // 'study' | 'quiz2' | 'quizAll'
     this.pyramidUserAnswers = {};
 
@@ -37,16 +42,28 @@ class OSMasterApp {
         const parsed = JSON.parse(stored);
         let updated = false;
 
-        // 自動合併新增的預設章節（如 CH5）
-        const existingChIds = new Set((parsed.chapters || []).map(c => c.id));
+        // 同步預設章節內容（CH1 ~ CH5），同時保留使用者自訂新增章節
+        const defMap = new Map(OS_DEFAULT_DATA.chapters.map(c => [c.id, c]));
+        const mergedChapters = [];
+        const seenIds = new Set();
+
+        // 依 OS_DEFAULT_DATA 順序優先加入預設章節（確保 ch1~ch5 順序正確）
         OS_DEFAULT_DATA.chapters.forEach(defCh => {
-          if (!existingChIds.has(defCh.id)) {
-            parsed.chapters.push(defCh);
+          mergedChapters.push(JSON.parse(JSON.stringify(defCh)));
+          seenIds.add(defCh.id);
+        });
+
+        // 加入使用者自訂章節（若有）
+        (parsed.chapters || []).forEach(userCh => {
+          if (!seenIds.has(userCh.id)) {
+            mergedChapters.push(userCh);
+            seenIds.add(userCh.id);
             updated = true;
           }
         });
+        parsed.chapters = mergedChapters;
 
-        // 自動合併新增的預設抽認卡
+        // 同步更新抽認卡
         const existingFcIds = new Set((parsed.flashcards || []).map(f => f.id));
         OS_DEFAULT_DATA.flashcards.forEach(defFc => {
           if (!existingFcIds.has(defFc.id)) {
@@ -55,7 +72,7 @@ class OSMasterApp {
           }
         });
 
-        // 自動合併新增的預設測驗題目
+        // 同步更新題庫
         const existingQIds = new Set((parsed.quizQuestions || []).map(q => q.id));
         OS_DEFAULT_DATA.quizQuestions.forEach(defQ => {
           if (!existingQIds.has(defQ.id)) {
@@ -64,13 +81,23 @@ class OSMasterApp {
           }
         });
 
-        if (updated) {
-          localStorage.setItem(this.storageKey, JSON.stringify(parsed));
+        // 同步更新非選題 (essayQuestions)
+        if (!parsed.essayQuestions) {
+          parsed.essayQuestions = [];
         }
+        const existingEssayIds = new Set((parsed.essayQuestions || []).map(e => e.id));
+        (OS_DEFAULT_DATA.essayQuestions || []).forEach(defE => {
+          if (!existingEssayIds.has(defE.id)) {
+            parsed.essayQuestions.push(defE);
+            updated = true;
+          }
+        });
+
+        localStorage.setItem(this.storageKey, JSON.stringify(parsed));
         return parsed;
       }
     } catch (e) {
-      console.warn('載入本機自訂資料失敗，採用預設資料', e);
+      console.warn('載入自訂資料失敗，採用預設值', e);
     }
     return JSON.parse(JSON.stringify(OS_DEFAULT_DATA));
   }
@@ -87,7 +114,9 @@ class OSMasterApp {
     try {
       const stored = localStorage.getItem(this.progressKey);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (!parsed.masteredEssayIds) parsed.masteredEssayIds = [];
+        return parsed;
       }
     } catch (e) {
       console.warn('載入學習進度失敗', e);
@@ -96,7 +125,8 @@ class OSMasterApp {
       answeredCount: 0,
       correctCount: 0,
       mistakeIds: [],
-      masteredFlashcardIds: []
+      masteredFlashcardIds: [],
+      masteredEssayIds: []
     };
   }
 
@@ -171,6 +201,7 @@ class OSMasterApp {
     this.btnCalcTabBuffer = document.getElementById('btn-calc-tab-buffer');
     this.btnCalcTabExp = document.getElementById('btn-calc-tab-exp');
     this.btnCalcTabQuantum = document.getElementById('btn-calc-tab-quantum');
+    this.btnCalcTabAmdahl = document.getElementById('btn-calc-tab-amdahl');
     this.btnCalcTabRAG = document.getElementById('btn-calc-tab-rag');
     this.btnCalcTabFork = document.getElementById('btn-calc-tab-fork');
     this.btnCalcTabCS = document.getElementById('btn-calc-tab-cs');
@@ -224,6 +255,13 @@ class OSMasterApp {
     this.calcQuantumInputUtil = document.getElementById('calc-quantum-input-util');
     this.btnSubmitCalcQuantum = document.getElementById('btn-submit-calc-quantum');
     this.calcFeedbackQuantum = document.getElementById('calc-feedback-quantum');
+
+    this.calcPanelAmdahl = document.getElementById('calc-panel-amdahl');
+    this.btnGenCalcAmdahl = document.getElementById('btn-gen-calc-amdahl');
+    this.calcQAmdahlText = document.getElementById('calc-q-amdahl-text');
+    this.calcAmdahlInput = document.getElementById('calc-amdahl-input');
+    this.btnVerifyCalcAmdahl = document.getElementById('btn-verify-calc-amdahl');
+    this.calcFeedbackAmdahl = document.getElementById('calc-feedback-amdahl');
 
     // 模組 6：資源配置圖 RAG
     this.btnGenCalcRAG = document.getElementById('btn-gen-calc-rag');
@@ -289,6 +327,22 @@ class OSMasterApp {
     this.quizChapterSelect = document.getElementById('quiz-chapter-select');
     this.quizListContainer = document.getElementById('quiz-list-container');
     this.btnResetQuiz = document.getElementById('btn-reset-quiz');
+    this.quizCategoryPills = document.querySelectorAll('#quiz-category-pills .filter-pill');
+    this.countQuizAll = document.getElementById('count-quiz-all');
+    this.countQuizCalc = document.getElementById('count-quiz-calc');
+    this.countQuizConcept = document.getElementById('count-quiz-concept');
+
+    // 期中非選問答庫區
+    this.statEssays = document.getElementById('stat-essays');
+    this.essayChapterSelect = document.getElementById('essay-chapter-select');
+    this.essayCategoryPills = document.querySelectorAll('#essay-category-pills .filter-pill');
+    this.essaySearchInput = document.getElementById('essay-search-input');
+    this.essayListContainer = document.getElementById('essay-list-container');
+    this.btnToggleAllEssayAnswers = document.getElementById('btn-toggle-all-essay-answers');
+    this.countEssayAll = document.getElementById('count-essay-all');
+    this.countEssayCalc = document.getElementById('count-essay-calc');
+    this.countEssayConcept = document.getElementById('count-essay-concept');
+    this.countEssayDesign = document.getElementById('count-essay-design');
 
     // 錯題本區
     this.mistakesContainer = document.getElementById('mistakes-container');
@@ -360,6 +414,9 @@ class OSMasterApp {
     this.btnCalcTabBuffer?.addEventListener('click', () => this.switchCalcLabTab('buffer'));
     this.btnCalcTabExp?.addEventListener('click', () => this.switchCalcLabTab('exp'));
     this.btnCalcTabQuantum?.addEventListener('click', () => this.switchCalcLabTab('quantum'));
+    this.btnCalcTabAmdahl?.addEventListener('click', () => this.switchCalcLabTab('amdahl'));
+    this.btnGenCalcAmdahl?.addEventListener('click', () => this.generateCalcAmdahl());
+    this.btnVerifyCalcAmdahl?.addEventListener('click', () => this.verifyCalcAmdahl());
     this.btnCalcTabRAG?.addEventListener('click', () => this.switchCalcLabTab('rag'));
     this.btnCalcTabFork?.addEventListener('click', () => this.switchCalcLabTab('fork'));
     this.btnCalcTabCS?.addEventListener('click', () => this.switchCalcLabTab('cs'));
@@ -420,6 +477,43 @@ class OSMasterApp {
       this.progress.correctCount = 0;
       this.saveProgress();
       this.renderQuiz();
+    });
+
+    // 題庫題型分類膠囊
+    this.quizCategoryPills?.forEach(pill => {
+      pill.addEventListener('click', () => {
+        this.quizCategoryPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.currentQuizCategoryFilter = pill.getAttribute('data-cat') || 'all';
+        this.renderQuiz();
+      });
+    });
+
+    // 非選題章節篩選
+    this.essayChapterSelect?.addEventListener('change', (e) => {
+      this.currentEssayChapterFilter = e.target.value;
+      this.renderEssayQuestions();
+    });
+
+    // 非選題類型膠囊
+    this.essayCategoryPills?.forEach(pill => {
+      pill.addEventListener('click', () => {
+        this.essayCategoryPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.currentEssayCategoryFilter = pill.getAttribute('data-cat') || 'all';
+        this.renderEssayQuestions();
+      });
+    });
+
+    // 非選題關鍵字即時搜尋
+    this.essaySearchInput?.addEventListener('input', (e) => {
+      this.currentEssaySearch = e.target.value.trim().toLowerCase();
+      this.renderEssayQuestions();
+    });
+
+    // 一鍵切換所有非選題解答展開/收合
+    this.btnToggleAllEssayAnswers?.addEventListener('click', () => {
+      this.toggleAllEssayAnswers();
     });
 
     // 錯題本
@@ -483,6 +577,8 @@ class OSMasterApp {
       this.renderFlashcard();
     } else if (tabId === 'quiz') {
       this.renderQuiz();
+    } else if (tabId === 'essay') {
+      this.renderEssayQuestions();
     } else if (tabId === 'simulator') {
       this.executeSimulation();
     } else if (tabId === 'extensions') {
@@ -511,7 +607,32 @@ class OSMasterApp {
     if (this.statMistakes) this.statMistakes.textContent = `${mistakes} 題待複習`;
     if (this.statFlashcards) this.statFlashcards.textContent = `${masteredFc} / ${totalFc} 張已掌握`;
 
-    const progressPct = Math.min(100, Math.round(((answered + masteredFc) / (totalQ + totalFc || 1)) * 100));
+    // 非選題掌握統計
+    const totalEssays = (this.data.essayQuestions || []).length;
+    const masteredEssays = (this.progress.masteredEssayIds || []).length;
+    if (this.statEssays) {
+      this.statEssays.textContent = `${masteredEssays} / ${totalEssays} 題已掌握`;
+    }
+
+    // 統計選擇題各類別數量
+    const allQuiz = this.data.quizQuestions || [];
+    const quizCalcs = allQuiz.filter(q => q.category === 'calc').length;
+    const quizConcepts = allQuiz.filter(q => q.category === 'concept' || !q.category).length;
+    if (this.countQuizAll) this.countQuizAll.textContent = allQuiz.length;
+    if (this.countQuizCalc) this.countQuizCalc.textContent = quizCalcs;
+    if (this.countQuizConcept) this.countQuizConcept.textContent = quizConcepts;
+
+    // 統計非選題各類別數量
+    const allEssays = this.data.essayQuestions || [];
+    const essayCalcs = allEssays.filter(e => e.category === 'calc').length;
+    const essayConcepts = allEssays.filter(e => e.category === 'concept').length;
+    const essayDesigns = allEssays.filter(e => e.category === 'design').length;
+    if (this.countEssayAll) this.countEssayAll.textContent = allEssays.length;
+    if (this.countEssayCalc) this.countEssayCalc.textContent = essayCalcs;
+    if (this.countEssayConcept) this.countEssayConcept.textContent = essayConcepts;
+    if (this.countEssayDesign) this.countEssayDesign.textContent = essayDesigns;
+
+    const progressPct = Math.min(100, Math.round(((answered + masteredFc + masteredEssays) / (totalQ + totalFc + totalEssays || 1)) * 100));
     if (this.statProgressFill) {
       this.statProgressFill.style.width = `${progressPct}%`;
     }
@@ -1159,6 +1280,7 @@ class OSMasterApp {
     this.generateCalcBuffer();
     this.generateCalcExp();
     this.generateCalcQuantum();
+    this.generateCalcAmdahl();
     this.generateCalcRAG();
     this.generateCalcFork();
     this.generateCalcCS();
@@ -1172,7 +1294,7 @@ class OSMasterApp {
       if (this.calcNavGroupNum) this.calcNavGroupNum.style.display = 'flex';
       if (this.calcNavGroupGraph) this.calcNavGroupGraph.style.display = 'none';
 
-      const numTabs = ['deadlock', 'semaphore', 'buffer', 'exp', 'quantum'];
+      const numTabs = ['deadlock', 'semaphore', 'buffer', 'exp', 'quantum', 'amdahl'];
       if (!numTabs.includes(this.currentCalcTab)) {
         this.switchCalcLabTab('deadlock');
       } else {
@@ -1201,6 +1323,7 @@ class OSMasterApp {
       { id: 'buffer', btn: this.btnCalcTabBuffer, panel: this.calcPanelBuffer },
       { id: 'exp', btn: this.btnCalcTabExp, panel: this.calcPanelExp },
       { id: 'quantum', btn: this.btnCalcTabQuantum, panel: this.calcPanelQuantum },
+      { id: 'amdahl', btn: this.btnCalcTabAmdahl, panel: this.calcPanelAmdahl },
       { id: 'rag', btn: this.btnCalcTabRAG, panel: this.calcPanelRAG },
       { id: 'fork', btn: this.btnCalcTabFork, panel: this.calcPanelFork },
       { id: 'cs', btn: this.btnCalcTabCS, panel: this.calcPanelCS }
@@ -1874,6 +1997,102 @@ class OSMasterApp {
     `;
     this.renderMath(this.calcFeedbackQuantum);
   }
+
+  // ==========================================
+  // 題型六：阿姆達爾定律（Amdahl's Law）多核心加速比推導
+  // ==========================================
+  generateCalcAmdahl() {
+    if (!this.calcQAmdahlText) return;
+    const presets = [
+      { sPercent: 25, S: 0.25, cores: 2 },
+      { sPercent: 25, S: 0.25, cores: 4 },
+      { sPercent: 25, S: 0.25, cores: 8 },
+      { sPercent: 20, S: 0.20, cores: 4 },
+      { sPercent: 20, S: 0.20, cores: 8 },
+      { sPercent: 10, S: 0.10, cores: 4 },
+      { sPercent: 10, S: 0.10, cores: 8 },
+      { sPercent: 40, S: 0.40, cores: 4 },
+      { sPercent: 50, S: 0.50, cores: 2 },
+      { sPercent: 50, S: 0.50, cores: 4 }
+    ];
+    const item = presets[this.randInt(0, presets.length - 1)];
+    const pPercent = 100 - item.sPercent;
+    const P = 1 - item.S;
+    const N = item.cores;
+
+    const denom = item.S + (P / N);
+    const speedup = Number((1 / denom).toFixed(2));
+    const maxSpeedup = Number((1 / item.S).toFixed(2));
+
+    const problem = {
+      sPercent: item.sPercent,
+      pPercent,
+      S: item.S,
+      P,
+      N,
+      denom: Number(denom.toFixed(4)),
+      speedup,
+      maxSpeedup,
+      explanation: `
+        <p><strong>1. 阿姆達爾定律（Amdahl's Law）加速比公式：</strong></p>
+        <p>$$\\text{Speedup} \\le \\frac{1}{S + \\frac{1 - S}{N}}$$</p>
+        <p>其中：</p>
+        <ul style="margin-left: 1.5rem;">
+          <li>循序執行比例 $S = ${item.sPercent}\\% = ${item.S}$</li>
+          <li>可平行化比例 $1 - S = ${pPercent}\\% = ${P.toFixed(2)}$</li>
+          <li>處理器核心數 $N = ${N}$</li>
+        </ul>
+        <p><strong>2. 逐步推導演算：</strong></p>
+        <p>$$\\text{分母} = S + \\frac{1 - S}{N} = ${item.S} + \\frac{${P.toFixed(2)}}{${N}} = ${item.S} + ${(P / N).toFixed(4)} = ${denom.toFixed(4)}$$</p>
+        <p>$$\\text{Speedup} = \\frac{1}{${denom.toFixed(4)}} \\approx \\mathbf{${speedup}}\\text{ 倍}$$</p>
+        <p><strong>3. 理論加速比極限（核心數 $N \\to \\infty$ 時）：</strong></p>
+        <p>$$\\lim_{N \\to \\infty} \\text{Speedup} = \\frac{1}{S} = \\frac{1}{${item.S}} = \\mathbf{${maxSpeedup}}\\text{ 倍}$$</p>
+        <p style="color: var(--accent-emerald); font-weight: 700; margin-top: 0.35rem;">結論：在 ${N} 核心下的理論加速比為 <strong>${speedup} 倍</strong>；無論硬體核心如何無限增加，極限加速比不超過 <strong>${maxSpeedup} 倍</strong>。</p>
+      `
+    };
+
+    this.currentCalcAmdahl = problem;
+    this.calcQAmdahlText.innerHTML = `
+      某應用程式經過效能分析，其中 <strong>${item.pPercent}%</strong> 的運算具備完全資料獨立性可平行化處理，另外 <strong>${item.sPercent}%</strong> 的程式碼必須嚴格循序執行（$S = ${item.S}$）。<br/>
+      若系統由單核心處理器升級至 <strong>${N} 核心處理器（$N = ${N}$）</strong>：<br/>
+      請根據<strong>阿姆達爾定律（Amdahl's Law）</strong>推算該應用程式所能獲得的<strong>加速比（Speedup）</strong>為多少倍？（請四捨五入至小數點後兩位）
+    `;
+
+    if (this.calcAmdahlInput) this.calcAmdahlInput.value = '';
+    if (this.calcFeedbackAmdahl) {
+      this.calcFeedbackAmdahl.style.display = 'none';
+      this.calcFeedbackAmdahl.className = 'calc-feedback';
+      this.calcFeedbackAmdahl.innerHTML = '';
+    }
+    this.renderMath(this.calcPanelAmdahl);
+  }
+
+  verifyCalcAmdahl() {
+    if (!this.currentCalcAmdahl || !this.calcFeedbackAmdahl || !this.calcAmdahlInput) return;
+    const userVal = parseFloat(this.calcAmdahlInput.value);
+    const expected = this.currentCalcAmdahl.speedup;
+
+    if (isNaN(userVal)) {
+      alert('請先輸入計算所得之加速比數值！');
+      return;
+    }
+
+    const diff = Math.abs(userVal - expected);
+    const isCorrect = diff <= 0.05;
+
+    this.calcFeedbackAmdahl.className = `calc-feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+    this.calcFeedbackAmdahl.style.display = 'block';
+    this.calcFeedbackAmdahl.innerHTML = `
+      <div style="font-weight: 700; font-size: 1.05rem; color: ${isCorrect ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; margin-bottom: 0.5rem;">
+        ${isCorrect ? '【判定正確】阿姆達爾定律加速比數值推導完全精確！' : `【判定有誤】您的計算結果為 ${userVal} 倍，標準答案約為 ${expected} 倍。`}
+      </div>
+      <div style="font-size: 0.92rem; line-height: 1.7; color: var(--text-light);">
+        ${this.currentCalcAmdahl.explanation}
+      </div>
+    `;
+    this.renderMath(this.calcFeedbackAmdahl);
+  }
+
 
   // ==========================================
   // 題型六：資源配置圖（RAG）死結判定
@@ -2903,8 +3122,16 @@ do {
       questions = questions.filter(q => q.chapter === this.currentQuizFilter);
     }
 
+    if (this.currentQuizCategoryFilter !== 'all') {
+      if (this.currentQuizCategoryFilter === 'calc') {
+        questions = questions.filter(q => q.category === 'calc');
+      } else if (this.currentQuizCategoryFilter === 'concept') {
+        questions = questions.filter(q => q.category === 'concept' || !q.category);
+      }
+    }
+
     if (questions.length === 0) {
-      this.quizListContainer.innerHTML = '<p class="text-muted">該章節目前無題目。</p>';
+      this.quizListContainer.innerHTML = '<p class="text-muted">查無符合條件的題目。</p>';
       return;
     }
 
@@ -2912,11 +3139,15 @@ do {
     questions.forEach((q, qIdx) => {
       const isMistake = this.progress.mistakeIds?.includes(q.id);
       const chName = q.chapter.toUpperCase();
+      const catBadge = q.category === 'calc'
+        ? '<span class="badge badge-calc" style="font-size:0.75rem;">計算推導</span>'
+        : '<span class="badge badge-concept" style="font-size:0.75rem;">觀念題</span>';
 
       html += `
         <div class="quiz-card" id="quiz-card-${q.id}">
           <div class="quiz-meta">
             <span class="badge badge-ch">${chName}</span>
+            ${catBadge}
             <span class="badge badge-tag">單選測驗</span>
             ${isMistake ? '<span class="badge" style="background-color:rgba(244,63,94,0.2); color:var(--accent-rose);">曾答錯</span>' : ''}
           </div>
@@ -3279,6 +3510,172 @@ do {
     alert('新測驗題目已成功加入題庫！');
   }
 
+
+  // ==========================================
+  // Tab: 期中非選問答庫 (Essay & Deductive Problems)
+  // ==========================================
+  updateEssayChapterSelect() {
+    if (!this.essayChapterSelect) return;
+    const currentVal = this.essayChapterSelect.value;
+    this.essayChapterSelect.innerHTML = '<option value="all">全部章節 (CH1 ~ CH5 綜合大題)</option>';
+    this.data.chapters.forEach(ch => {
+      const opt = document.createElement('option');
+      opt.value = ch.id;
+      opt.textContent = `${ch.title} (${ch.subtitle || ''})`;
+      this.essayChapterSelect.appendChild(opt);
+    });
+    this.essayChapterSelect.value = currentVal || 'all';
+  }
+
+  renderEssayQuestions() {
+    if (!this.essayListContainer) return;
+    let questions = this.data.essayQuestions || [];
+
+    // 章節過濾
+    if (this.currentEssayChapterFilter !== 'all') {
+      questions = questions.filter(q => q.chapter === this.currentEssayChapterFilter);
+    }
+
+    // 題型過濾
+    if (this.currentEssayCategoryFilter !== 'all') {
+      questions = questions.filter(q => q.category === this.currentEssayCategoryFilter);
+    }
+
+    // 關鍵字搜尋
+    if (this.currentEssaySearch) {
+      const kw = this.currentEssaySearch.toLowerCase();
+      questions = questions.filter(q => {
+        const titleMatch = (q.title || '').toLowerCase().includes(kw);
+        const qMatch = (q.question || '').toLowerCase().includes(kw);
+        const tagMatch = (q.tags || []).some(t => t.toLowerCase().includes(kw));
+        const hintMatch = (q.hint || '').toLowerCase().includes(kw);
+        return titleMatch || qMatch || tagMatch || hintMatch;
+      });
+    }
+
+    if (questions.length === 0) {
+      this.essayListContainer.innerHTML = '<p class="text-muted" style="text-align:center; padding: 2rem;">查無符合條件的非選問答題目。</p>';
+      return;
+    }
+
+    let html = '';
+    questions.forEach((q, idx) => {
+      const isMastered = (this.progress.masteredEssayIds || []).includes(q.id);
+      const chUpper = (q.chapter || '').toUpperCase();
+
+      let catBadgeHtml = '';
+      if (q.category === 'calc') {
+        catBadgeHtml = '<span class="badge badge-calc">綜合計算推導</span>';
+      } else if (q.category === 'concept') {
+        catBadgeHtml = '<span class="badge badge-concept">名詞解釋與核心觀念</span>';
+      } else {
+        catBadgeHtml = '<span class="badge badge-design">架構設計與申論問答</span>';
+      }
+
+      const tagsHtml = (q.tags || []).map(t => `<span class="badge badge-tag">${t}</span>`).join(' ');
+
+      html += `
+        <div class="essay-card ${isMastered ? 'mastered' : ''}" id="essay-card-${q.id}">
+          <div class="essay-card-header">
+            <div class="essay-meta">
+              <span class="badge badge-ch">${chUpper}</span>
+              ${catBadgeHtml}
+              <span class="badge badge-score">${q.points || 10} 分</span>
+              ${tagsHtml}
+            </div>
+            <div>
+              <button class="essay-master-btn ${isMastered ? 'mastered' : ''}" onclick="app.toggleEssayMastered('${q.id}')">
+                ${isMastered ? '✓ 已掌握' : '標記為已掌握'}
+              </button>
+            </div>
+          </div>
+
+          <div class="essay-question-title">${q.title}</div>
+          <div class="essay-question-body">${this.formatMath(q.question).replace(/\n/g, '<br/>')}</div>
+
+          ${q.hint ? `
+            <div class="essay-hint-box">
+              <strong>破題關鍵思考：</strong> ${this.formatMath(q.hint)}
+            </div>
+          ` : ''}
+
+          <div class="essay-actions-row">
+            <button class="essay-toggle-btn" id="btn-toggle-ans-${q.id}" onclick="app.toggleEssayAnswer('${q.id}')">
+              ${this.allEssayAnswersExpanded ? '收合解答與推導' : '展開完整標準解答與演算'}
+            </button>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">題號編號：${q.id}</span>
+          </div>
+
+          <div class="essay-answer-panel ${this.allEssayAnswersExpanded ? 'show' : ''}" id="essay-ans-${q.id}">
+            <div class="essay-answer-header">
+              <span>標準解答與逐步推導剖析</span>
+            </div>
+            <div style="color: var(--text-light); line-height: 1.7; font-size: 0.93rem;">
+              ${this.formatMath(q.answer).replace(/\n/g, '<br/>')}
+            </div>
+
+            ${q.rubric ? `
+              <div class="essay-rubric-box">
+                <div class="essay-rubric-header">考試評分標準（Rubric）</div>
+                <div style="line-height: 1.6;">${this.formatMath(q.rubric).replace(/\n/g, '<br/>')}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    this.essayListContainer.innerHTML = html;
+    this.renderMath(this.essayListContainer);
+  }
+
+  toggleEssayAnswer(id) {
+    const panel = document.getElementById(`essay-ans-${id}`);
+    const btn = document.getElementById(`btn-toggle-ans-${id}`);
+    if (!panel) return;
+    const isShowing = panel.classList.toggle('show');
+    if (btn) {
+      btn.textContent = isShowing ? '收合解答與推導' : '展開完整標準解答與演算';
+    }
+    if (isShowing) {
+      this.renderMath(panel);
+    }
+  }
+
+  toggleEssayMastered(id) {
+    if (!this.progress.masteredEssayIds) {
+      this.progress.masteredEssayIds = [];
+    }
+    const idx = this.progress.masteredEssayIds.indexOf(id);
+    if (idx > -1) {
+      this.progress.masteredEssayIds.splice(idx, 1);
+    } else {
+      this.progress.masteredEssayIds.push(id);
+    }
+    this.saveProgress();
+    this.renderEssayQuestions();
+  }
+
+  toggleAllEssayAnswers() {
+    this.allEssayAnswersExpanded = !this.allEssayAnswersExpanded;
+    if (this.btnToggleAllEssayAnswers) {
+      this.btnToggleAllEssayAnswers.textContent = this.allEssayAnswersExpanded ? '收合所有解答' : '展開所有解答';
+    }
+    const panels = this.essayListContainer?.querySelectorAll('.essay-answer-panel');
+    const btns = this.essayListContainer?.querySelectorAll('.essay-toggle-btn');
+    panels?.forEach(p => {
+      if (this.allEssayAnswersExpanded) {
+        p.classList.add('show');
+        this.renderMath(p);
+      } else {
+        p.classList.remove('show');
+      }
+    });
+    btns?.forEach(b => {
+      b.textContent = this.allEssayAnswersExpanded ? '收合解答與推導' : '展開完整標準解答與演算';
+    });
+  }
+
   // ==========================================
   // 總體渲染入口
   // ==========================================
@@ -3290,6 +3687,8 @@ do {
     this.initSimulatorPresets();
     this.generateSchedulerPractice();
     this.renderQuiz();
+    this.updateEssayChapterSelect();
+    this.renderEssayQuestions();
     this.renderFlashcard();
     this.initDeadlockChallenge();
     this.initCalcLab();
