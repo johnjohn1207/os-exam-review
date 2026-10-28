@@ -1620,3 +1620,72 @@ body {
 .essay-rubric-list li {
   margin-bottom: 0.35rem;
 }
+
+
+/* 按鈕選取與禁用狀態 */
+.btn.active,
+.btn.selected {
+  background-color: var(--primary) !important;
+  color: #0f172a !important;
+  border-color: var(--primary) !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+
+/* 死結自主判定選項按鈕 */
+.deadlock-choice-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deadlock-choice-btn:hover {
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.deadlock-choice-btn.active.choice-safe {
+  background-color: rgba(16, 185, 129, 0.25) !important;
+  border-color: var(--accent-emerald) !important;
+  color: #34d399 !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+}
+
+.deadlock-choice-btn.active.choice-unsafe {
+  background-color: rgba(244, 63, 94, 0.25) !important;
+  border-color: var(--accent-rose) !important;
+  color: #fb7185 !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.35);
+}
+
+/* 題庫只複習錯題篩選膠囊 */
+.filter-pill-mistakes {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+  color: #fb7185 !important;
+}
+
+.filter-pill-mistakes:hover {
+  border-color: var(--accent-rose) !important;
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.filter-pill-mistakes.active {
+  background-color: var(--accent-rose) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-rose) !important;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.35);
+}

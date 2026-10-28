@@ -10,7 +10,7 @@ const PROCESS_COLORS = [
 
 class OSMasterApp {
   constructor() {
-    this.storageKey = 'OS_MASTER_DATA_V5';
+    this.storageKey = 'OS_MASTER_DATA_V6';
     this.progressKey = 'OS_MASTER_PROGRESS_V1';
     this.data = this.loadData();
     this.progress = this.loadProgress();
@@ -332,6 +332,7 @@ class OSMasterApp {
     this.countQuizAll = document.getElementById('count-quiz-all');
     this.countQuizCalc = document.getElementById('count-quiz-calc');
     this.countQuizConcept = document.getElementById('count-quiz-concept');
+    this.countQuizMistakes = document.getElementById('count-quiz-mistakes');
 
     // 期中非選問答庫區
     this.statEssays = document.getElementById('stat-essays');
@@ -447,6 +448,21 @@ class OSMasterApp {
     this.btnGenCalcFork?.addEventListener('click', () => this.generateCalcFork());
     this.btnGenCalcCS?.addEventListener('click', () => this.generateCalcCS());
 
+    // 圖形與逐步演練驗證監聽
+    this.btnRagCycleYes?.addEventListener('click', () => this.selectRagChoice('cycle', true));
+    this.btnRagCycleNo?.addEventListener('click', () => this.selectRagChoice('cycle', false));
+    this.btnRagDeadlockYes?.addEventListener('click', () => this.selectRagChoice('deadlock', true));
+    this.btnRagDeadlockNo?.addEventListener('click', () => this.selectRagChoice('deadlock', false));
+    this.btnSubmitCalcRAG?.addEventListener('click', () => this.verifyCalcRAG());
+
+    this.btnCsOptMutex?.addEventListener('click', () => this.selectCsChoice('mutex'));
+    this.btnCsOptProgress?.addEventListener('click', () => this.selectCsChoice('progress'));
+    this.btnCsOptBounded?.addEventListener('click', () => this.selectCsChoice('bounded'));
+    this.btnCsOptCorrect?.addEventListener('click', () => this.selectCsChoice('correct'));
+    this.btnSubmitCalcCS?.addEventListener('click', () => this.verifyCalcCS());
+
+    this.calcAmdahlInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.verifyCalcAmdahl(); });
+
     // 甘特圖排程器
     this.btnSchedModeDemo?.addEventListener('click', () => this.switchSchedulerMode('demo'));
     this.btnSchedModePractice?.addEventListener('click', () => this.switchSchedulerMode('practice'));
@@ -522,7 +538,11 @@ class OSMasterApp {
       if (confirm('確定要清空所有錯題紀錄嗎？')) {
         this.progress.mistakeIds = [];
         this.saveProgress();
+        this.updateStatsBanner();
         this.renderMistakes();
+        if (this.currentQuizCategoryFilter === 'mistakes') {
+          this.renderQuiz();
+        }
       }
     });
 
@@ -622,6 +642,7 @@ class OSMasterApp {
     if (this.countQuizAll) this.countQuizAll.textContent = allQuiz.length;
     if (this.countQuizCalc) this.countQuizCalc.textContent = quizCalcs;
     if (this.countQuizConcept) this.countQuizConcept.textContent = quizConcepts;
+    if (this.countQuizMistakes) this.countQuizMistakes.textContent = (this.progress.mistakeIds || []).length;
 
     // 統計非選題各類別數量
     const allEssays = this.data.essayQuestions || [];
@@ -861,6 +882,7 @@ class OSMasterApp {
     selects.forEach(sel => {
       const targetLevel = Number(sel.getAttribute('data-level'));
       const expected = this.data.memoryHierarchy.find(l => l.level === targetLevel);
+      if (!expected) return;
       const userVal = sel.value;
 
       if (userVal === expected.name) {
@@ -3108,11 +3130,23 @@ do {
         questions = questions.filter(q => q.category === 'calc');
       } else if (this.currentQuizCategoryFilter === 'concept') {
         questions = questions.filter(q => q.category === 'concept' || !q.category);
+      } else if (this.currentQuizCategoryFilter === 'mistakes') {
+        const mistakeSet = new Set(this.progress.mistakeIds || []);
+        questions = questions.filter(q => mistakeSet.has(q.id));
       }
     }
 
     if (questions.length === 0) {
-      this.quizListContainer.innerHTML = '<p class="text-muted">查無符合條件的題目。</p>';
+      if (this.currentQuizCategoryFilter === 'mistakes') {
+        this.quizListContainer.innerHTML = `
+          <div class="alert-box success" style="text-align:center; padding: 2.5rem 1.5rem; margin-top: 1rem;">
+            <div style="font-size:1.15rem; font-weight:700; margin-bottom:0.5rem; color:var(--accent-emerald);">太棒了！目前題庫中沒有待複習的錯題</div>
+            <p style="color:var(--text-muted); font-size:0.92rem; margin:0;">若在下方其他題型測驗中答錯，系統會自動歸納記錄至此，方便考前專注衝刺突破。</p>
+          </div>
+        `;
+      } else {
+        this.quizListContainer.innerHTML = '<p class="text-muted" style="text-align:center; padding: 2rem;">尚無符合條件的題目。</p>';
+      }
       return;
     }
 
@@ -3290,7 +3324,11 @@ do {
   removeMistake(questionId) {
     this.progress.mistakeIds = this.progress.mistakeIds.filter(id => id !== questionId);
     this.saveProgress();
+    this.updateStatsBanner();
     this.renderMistakes();
+    if (this.currentQuizCategoryFilter === 'mistakes') {
+      this.renderQuiz();
+    }
   }
 
   // ==========================================
