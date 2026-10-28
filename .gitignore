@@ -2,6 +2,9 @@
 desktop.ini
 scratch/
 
+# Office 暫存鎖定檔案
+~$*
+
 # 大型二進位參考檔案
 *.pdf
 *.ppt

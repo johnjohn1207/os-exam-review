@@ -604,6 +604,10 @@ class OSMasterApp {
       this.executeSimulation();
     } else if (tabId === 'extensions') {
       this.exportCurrentData();
+    } else if (tabId === 'ncu-exam') {
+      if (window.NCUExamApp) {
+        window.NCUExamApp.renderQuestions();
+      }
     }
     const activePanel = document.getElementById(`tab-${tabId}`);
     if (activePanel) {
