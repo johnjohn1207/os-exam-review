@@ -2243,6 +2243,7 @@ const OS_DEFAULT_DATA = {
   "essayQuestions": [
     {
       "id": "essay-1",
+      "tags": ["CH5 死結","銀行家演算法","安全序列","動態資源請求"],
       "chapter": "ch5",
       "category": "calc",
       "title": "銀行家演算法綜合分析大題：安全狀態判定與動態資源請求審查",
@@ -2258,6 +2259,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-2",
+      "tags": ["CH3 CPU 排程","FCFS","SJF","SRTF","Round Robin","甘特圖"],
       "chapter": "ch3",
       "category": "calc",
       "title": "CPU 排程演算法全指標綜合對比：甘特圖、等待時間與週轉時間推導",
@@ -2274,6 +2276,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-3",
+      "tags": ["CH4 多執行緒","阿姆達爾定律","多核心加速比","平行運算瓶頸"],
       "chapter": "ch4",
       "category": "calc",
       "title": "阿姆達爾定律（Amdahl's Law）多核心加速比極限與瓶頸分析",
@@ -2290,6 +2293,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-4",
+      "tags": ["CH2 行程概念","fork() 系統呼叫","行程樹推導","記憶體空間複製"],
       "chapter": "ch2",
       "category": "calc",
       "title": "fork() 系統呼叫行程樹、執行歷程與輸出次數綜合推導",
@@ -2306,6 +2310,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-5",
+      "tags": ["CH5 死結","鴿籠原理","臨界資源數","公式嚴格推導"],
       "chapter": "ch5",
       "category": "calc",
       "title": "死結臨界最少資源數鴿籠原理嚴格推導",
@@ -2322,6 +2327,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-6",
+      "tags": ["CH1 系統概論","記憶體階層","EAT 有效存取時間","快取命中率"],
       "chapter": "ch1",
       "category": "calc",
       "title": "記憶體階層有效存取時間（Effective Access Time, EAT）與快取效能推導",
@@ -2338,6 +2344,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-7",
+      "tags": ["CH3 即時排程","RMS 速率單調","EDF 最早截止時間優先","排程能力對比"],
       "chapter": "ch3",
       "category": "calc",
       "title": "即時排程速率單調（RMS）充分條件公式驗證與 EDF 排程對比",
@@ -2354,6 +2361,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-8",
+      "tags": ["CH1 系統架構","雙模式運作","特權指令","Trap 軟體中斷"],
       "chapter": "ch1",
       "category": "concept",
       "title": "雙模式運作（Dual-Mode Operation）、特權指令與軟體中斷（Trap）",
@@ -2370,6 +2378,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-9",
+      "tags": ["CH1 系統架構","DMA 直接記憶體存取","輪詢 Polling","中斷驅動 I/O"],
       "chapter": "ch1",
       "category": "design",
       "title": "直接記憶體存取（DMA）機制 vs. 輪詢（Polling）與傳統中斷驅動",
@@ -2386,6 +2395,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-10",
+      "tags": ["CH2 行程概念","長期排程器","中期排程器","短期排程器","排程器對照"],
       "chapter": "ch2",
       "category": "concept",
       "title": "三大排程器（Long-term, Medium-term, Short-term Schedulers）深度對照",
@@ -2401,6 +2411,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-11",
+      "tags": ["CH2 行程間通訊","IPC","共享記憶體","訊息傳遞","Bounded-Buffer"],
       "chapter": "ch2",
       "category": "calc",
       "title": "行程間通訊（IPC）共享記憶體 vs. 訊息傳遞、有界限緩衝區空間條件",
@@ -2417,6 +2428,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-12",
+      "tags": ["CH4 多執行緒","行程 vs 執行緒","PCB vs TCB","上下文切換開銷"],
       "chapter": "ch4",
       "category": "concept",
       "title": "行程（Process）vs. 執行緒（Thread）記憶體配置、開銷與資源共享",
@@ -2432,6 +2444,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-13",
+      "tags": ["CH4 多執行緒","多執行緒模型","Many-to-One","One-to-One","Many-to-Many"],
       "chapter": "ch4",
       "category": "design",
       "title": "三大多執行緒模型（Many-to-One, One-to-One, Many-to-Many）與現代 OS 實作選型",
@@ -2447,6 +2460,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-14",
+      "tags": ["CH5 死結","死結四大條件","循環等待破壞","全序排序預防證明"],
       "chapter": "ch5",
       "category": "concept",
       "title": "死結四大必要條件、破壞預防策略與全域遞增編號排序證明",
@@ -2463,6 +2477,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-15",
+      "tags": ["CH5 死結","資源配置圖 RAG","宣告邊演算法","等待圖 Wait-for Graph"],
       "chapter": "ch5",
       "category": "calc",
       "title": "資源配置圖（RAG）宣告邊演算法與等待圖（Wait-for Graph）死結判定",
@@ -2478,6 +2493,7 @@ const OS_DEFAULT_DATA = {
     },
     {
       "id": "essay-16",
+      "tags": ["CH3 行程架構","Chrome 多行程架構","沙盒機制","護衛效應 Convoy Effect"],
       "chapter": "ch3",
       "category": "design",
       "title": "經典系統架構剖析：Chrome 瀏覽器多行程架構與 CPU 護衛效應（Convoy Effect）",

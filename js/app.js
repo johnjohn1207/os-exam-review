@@ -10,7 +10,7 @@ const PROCESS_COLORS = [
 
 class OSMasterApp {
   constructor() {
-    this.storageKey = 'OS_MASTER_DATA_V4';
+    this.storageKey = 'OS_MASTER_DATA_V5';
     this.progressKey = 'OS_MASTER_PROGRESS_V1';
     this.data = this.loadData();
     this.progress = this.loadProgress();
@@ -81,17 +81,18 @@ class OSMasterApp {
           }
         });
 
-        // 同步更新非選題 (essayQuestions)
-        if (!parsed.essayQuestions) {
-          parsed.essayQuestions = [];
-        }
-        const existingEssayIds = new Set((parsed.essayQuestions || []).map(e => e.id));
+        // 同步更新非選題 (essayQuestions) - 確保預設題庫保持最新並保留使用者自訂非選題
+        const essayMap = new Map((parsed.essayQuestions || []).map(e => [e.id, e]));
+        const mergedEssays = [];
         (OS_DEFAULT_DATA.essayQuestions || []).forEach(defE => {
-          if (!existingEssayIds.has(defE.id)) {
-            parsed.essayQuestions.push(defE);
-            updated = true;
-          }
+          mergedEssays.push(JSON.parse(JSON.stringify(defE)));
+          essayMap.delete(defE.id);
         });
+        essayMap.forEach(customE => {
+          mergedEssays.push(customE);
+          updated = true;
+        });
+        parsed.essayQuestions = mergedEssays;
 
         localStorage.setItem(this.storageKey, JSON.stringify(parsed));
         return parsed;
@@ -3501,7 +3502,7 @@ do {
     this.data.chapters.forEach(ch => {
       const opt = document.createElement('option');
       opt.value = ch.id;
-      opt.textContent = `${ch.title} (${ch.subtitle || ''})`;
+      opt.textContent = ch.subtitle ? `${ch.title} (${ch.subtitle})` : ch.title;
       this.essayChapterSelect.appendChild(opt);
     });
     this.essayChapterSelect.value = currentVal || 'all';
@@ -3542,6 +3543,7 @@ do {
     questions.forEach((q, idx) => {
       const isMastered = (this.progress.masteredEssayIds || []).includes(q.id);
       const chUpper = (q.chapter || '').toUpperCase();
+      const pointsLabel = typeof q.points === 'string' && q.points.includes('分') ? q.points : `${q.points || 10} 分`;
 
       let catBadgeHtml = '';
       if (q.category === 'calc') {
@@ -3560,7 +3562,7 @@ do {
             <div class="essay-meta">
               <span class="badge badge-ch">${chUpper}</span>
               ${catBadgeHtml}
-              <span class="badge badge-score">${q.points || 10} 分</span>
+              <span class="badge badge-score">${pointsLabel}</span>
               ${tagsHtml}
             </div>
             <div>
@@ -3597,7 +3599,12 @@ do {
             ${q.rubric ? `
               <div class="essay-rubric-box">
                 <div class="essay-rubric-header">考試評分標準（Rubric）</div>
-                <div style="line-height: 1.6;">${this.formatMath(q.rubric).replace(/\n/g, '<br/>')}</div>
+                <div style="line-height: 1.6;">
+                  ${Array.isArray(q.rubric)
+                    ? `<ul class="essay-rubric-list" style="margin: 0.35rem 0 0 1.25rem; padding: 0; line-height: 1.7;">${q.rubric.map(r => `<li>${this.formatMath(r)}</li>`).join('')}</ul>`
+                    : this.formatMath(String(q.rubric)).replace(/\n/g, '<br/>')
+                  }
+                </div>
               </div>
             ` : ''}
           </div>
@@ -3664,26 +3671,31 @@ do {
     this.renderChapterNav();
     this.renderChapterNotes();
     this.renderMemoryPyramid();
-    this.initSimulatorPresets();
-    this.generateSchedulerPractice();
-    this.renderQuiz();
-    this.updateEssayChapterSelect();
-    this.renderEssayQuestions();
-    this.renderFlashcard();
-    this.initDeadlockChallenge();
-    this.initCalcLab();
-    this.exportCurrentData();
-    this.renderMath(document.body);
+    try { this.initSimulatorPresets(); } catch (e) { console.warn('Simulator init warning:', e); }
+    try { this.generateSchedulerPractice(); } catch (e) { console.warn('Scheduler practice warning:', e); }
+    try { this.renderQuiz(); } catch (e) { console.warn('Quiz render warning:', e); }
+    try { this.updateEssayChapterSelect(); } catch (e) { console.warn('Essay chapter select warning:', e); }
+    try { this.renderEssayQuestions(); } catch (e) { console.warn('Essay render warning:', e); }
+    try { this.renderFlashcard(); } catch (e) { console.warn('Flashcard render warning:', e); }
+    try { this.initDeadlockChallenge(); } catch (e) { console.warn('Deadlock init warning:', e); }
+    try { this.initCalcLab(); } catch (e) { console.warn('Calc lab init warning:', e); }
+    try { this.exportCurrentData(); } catch (e) { console.warn('Export current data warning:', e); }
+    try { this.renderMath(document.body); } catch (e) { console.warn('Math render warning:', e); }
   }
 }
 
 // 實例化全域應用程式物件
-let app;
+var app;
 document.addEventListener('DOMContentLoaded', () => {
-  app = new OSMasterApp();
+  try {
+    app = new OSMasterApp();
+    window.app = app;
+  } catch (err) {
+    console.error('OS Master 初始化失敗:', err);
+  }
 });
 window.addEventListener('load', () => {
-  if (app && window.renderMathInElement) {
-    app.renderMath(document.body);
+  if (window.app && window.renderMathInElement) {
+    window.app.renderMath(document.body);
   }
 });

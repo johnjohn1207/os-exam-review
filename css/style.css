@@ -1607,3 +1607,16 @@ body {
   align-items: center;
   gap: 0.35rem;
 }
+
+
+.option-btn:disabled {
+  cursor: default;
+}
+
+.essay-rubric-list {
+  list-style-type: disc;
+}
+
+.essay-rubric-list li {
+  margin-bottom: 0.35rem;
+}
