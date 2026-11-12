@@ -663,8 +663,8 @@ const OS_DEFAULT_DATA = {
               "desc": "程式由多個分段組成。二維邏輯位址結構：`<segment-number s, offset d>`。\n分段表（Segment Table）：包含界限（Limit，段長）與基底（Base，該段在實體記憶體的起始位址）。"
             },
             {
-              "term": "🎨【必考畫圖】分段硬體架構圖（Slide 28）",
-              "desc": "<strong>手繪架構要點：</strong><br/>\n1. CPU 產生邏輯位址 `<s, d>`。<br/>\n2. 索引：以段號 s 查詢段表（Segment Table），取出該段的 limit 與 base。<br/>\n3. 判斷：檢查位移 d 是否小於 limit（d < limit）？若否則觸發設陷（Trap: addressing error）。<br/>\n4. 位址合成：若合法，透過硬體加法器將 base + d 相加，輸出實體位址送至實體記憶體。<br/>\n<div class=\"exam-image-box\" style=\"margin-top:0.75rem; text-align:center;\"><img src=\"images/OS-ch06/slide_28.png\" alt=\"Segmentation Hardware\" style=\"max-width:100%; border-radius:6px; border:1px solid var(--border-color); box-shadow:0 4px 12px rgba(0,0,0,0.3);\"/><p style=\"font-size:0.85rem; color:var(--text-muted); margin-top:0.35rem;\">圖 6.4：分段硬體位址轉換架構圖（投影片 Slide 28 · 必考畫圖題）</p></div>"
+              "term": "🔥【老師特別交代 · 100% 一定會考怎麼畫】分段硬體架構圖（Segmentation Hardware · Slide 28）",
+              "desc": "<div class=\"alert-box\" style=\"border-left: 4px solid var(--accent-rose); background: rgba(244, 63, 94, 0.1); margin-bottom: 0.75rem; padding: 0.75rem 1rem;\">\n  <strong style=\"color: var(--accent-rose); font-size: 0.95rem;\">⚠️ 考前最高警報：老師課堂特別交代「此圖一定會考怎麼畫」！請務必親手練習手繪至少三次！</strong>\n</div>\n<div style=\"line-height: 1.8; font-size: 0.92rem;\">\n  <strong>【手繪五大必備核心元件與扣分地雷（漏畫必扣分）】：</strong><br/>\n  1. <strong>CPU 邏輯位址暫存器</strong>：必須畫出水平長方形，切分為 <code>s</code>（段號 Segment Number）與 <code>d</code>（頁內位移 Offset）。<br/>\n  2. <strong>段表（Segment Table）</strong>：必須清楚畫出包含兩大欄位：<code>limit</code>（段長）與 <code>base</code>（實體起始基底位址）。<code>s</code> 作為查表索引指針指向段表。<br/>\n  3. <strong>比較器（Comparator <code>&lt;</code>）</strong>：必須拉出一條線將 <code>d</code> 與 <code>limit</code> 接入比較器，並明確標註判斷條件 <code>d &lt; limit</code>：<br/>\n  &nbsp;&nbsp;&nbsp;&nbsp;• <strong>分支 No（若不滿足）</strong>：箭頭必須指向 <strong>trap; addressing error</strong>（位址越界設陷至 OS，考生常漏畫此處而被扣分！）。<br/>\n  &nbsp;&nbsp;&nbsp;&nbsp;• <strong>分支 Yes（若滿足）</strong>：代表存取合法，信號繼續向下傳遞。<br/>\n  4. <strong>硬體加法器（Adder <code>+</code>）</strong>：圓形加法符號，兩端輸入分別為段表查出的 <code>base</code> 與位移 <code>d</code>，進行 <code>base + d</code> 運算。<br/>\n  5. <strong>實體記憶體（Physical Memory）</strong>：加法器輸出的實體位址（Physical Address）直接指向實體記憶體存取。<br/>\n  <br/>\n  <strong>【手繪滿分口訣】：</strong><br/>\n  <span style=\"color: var(--accent-cyan); font-weight: bold; background: rgba(14, 165, 233, 0.15); padding: 0.2rem 0.6rem; border-radius: 4px;\">「s 查段表取 limit 與 base ➔ d 與 limit 先比大小防越界 ➔ 越界 trap 設陷 ➔ 合法 base 加 d 進記憶體」</span>\n</div>\n<div class=\"exam-image-box\" style=\"margin-top:0.75rem; text-align:center;\">\n  <img src=\"images/OS-ch06/slide_28.png\" alt=\"Segmentation Hardware\" style=\"max-width:100%; border-radius:6px; border:2px solid var(--accent-rose); box-shadow:0 4px 16px rgba(244, 63, 94, 0.25);\"/>\n  <p style=\"font-size:0.88rem; color:var(--accent-rose); font-weight:bold; margin-top:0.45rem;\">圖 6.4：分段硬體架構圖（Segmentation Hardware · 投影片 Slide 28 · 老師交代 100% 一定考手繪）</p>\n</div>"
             },
             {
               "term": "🎨【必考畫圖】分段映射實例圖（Slide 29）",
@@ -3281,6 +3281,31 @@ const OS_DEFAULT_DATA = {
         "D > m 判定與掛起行程調度及 PFF 策略說明透徹（2 分）"
       ],
       "scope": "final"
+    },
+    {
+      "id": "essay24",
+      "chapter": "ch6",
+      "title": "【老師交代 100% 必考手繪圖】分段硬體架構圖（Segmentation Hardware）繪製與位址轉換推導",
+      "scope": "final",
+      "category": "design",
+      "tags": [
+        "CH6",
+        "必考畫圖",
+        "Segmentation",
+        "硬體架構",
+        "位址轉換",
+        "老師交代必考"
+      ],
+      "question": "<strong>【期末核心大題 · 老師課堂特別點名必考】</strong>\n<br/>\n分段（Segmentation）提供符合程式設計師思維的二維位址空間。請回答下列問題：\n<br/>\n1. <strong>【必考手繪題】</strong> 請親手繪出完整的<strong>「分段硬體位址轉換架構圖（Segmentation Hardware）」</strong>，圖中必須清晰完整標註下列所有元件、訊號線與判斷路徑：\n  - CPU 邏輯位址暫存器（段號 $s$ 與位移 $d$）\n  - 段表（Segment Table）及其內部的兩大關鍵欄位名稱\n  - 比較器（Comparator）及其判斷條件與 Yes/No 分支走向\n  - 錯誤設陷（Trap: addressing error）路徑\n  - 加法器（Adder）及其兩端輸入與輸出\n  - 實體記憶體（Physical Memory）\n<br/>\n2. 說明段表中的 <code>limit</code> 與 <code>base</code> 各自代表何種實體物理意義？為什麼硬體設計上必須「先比較 limit，再相加 base」？如果顛倒順序會引發何種嚴重後果？",
+      "hint": "手繪時務必記得畫出 d 與 limit 的比較器，且未通過時拉出箭頭指向 trap: addressing error！這是考試評分最容易扣分的地雷！",
+      "answer": "<p><strong>【題解第一部分：分段硬體架構圖手繪結構】</strong></p>\n<div style=\"text-align: center; margin-bottom: 1rem;\">\n  <img src=\"images/OS-ch06/slide_28.png\" alt=\"Segmentation Hardware\" style=\"max-width: 100%; border-radius: 8px; border: 2px solid var(--accent-rose); box-shadow: 0 4px 16px rgba(244, 63, 94, 0.25);\"/>\n  <p style=\"font-size: 0.88rem; color: var(--accent-rose); font-weight: bold; margin-top: 0.4rem;\">【標準答案手繪架構圖 · 投影片 Slide 28】</p>\n</div>\n<ol style=\"margin-left: 1.5rem; line-height: 1.8;\">\n  <li><strong>CPU 邏輯位址暫存器：</strong> 水平長條，左半部為段號 $s$（Segment Number），右半部為頁內位移 $d$（Offset）。</li>\n  <li><strong>段表（Segment Table）：</strong> 表格結構，包含兩欄位：\n    <ul>\n      <li><code>limit</code>：記錄該分段的合法長度（長度大小）。</li>\n      <li><code>base</code>：記錄該分段在實體記憶體中的起始實體位址。</li>\n      <li>段號 $s$ 作為索引指向段表的第 $s$ 筆條目。</li>\n    </ul>\n  </li>\n  <li><strong>比較器（Comparator <code>&lt;</code>）：</strong>\n    <ul>\n      <li>兩端輸入：位移 $d$ 與段表查出之 <code>limit</code>。</li>\n      <li>判斷條件：$d < \text{limit}$。</li>\n      <li><strong>No 分支（$d \\ge \text{limit}$）：</strong> 觸發 <strong>trap; addressing error</strong> 進入作業系統核心終止非法越界存取（考生最容易漏畫！）。</li>\n      <li><strong>Yes 分支（$d < \text{limit}$）：</strong> 存取合法，信號准許加法器運作。</li>\n    </ul>\n  </li>\n  <li><strong>硬體加法器（Adder <code>+</code>）：</strong> 圓形加法符號，將段表查出之 <code>base</code> 實體基底與位移 $d$ 相加，輸出實體位址：$$\text{Physical Address} = \text{base} + d$$</li>\n  <li><strong>實體記憶體（Physical Memory）：</strong> 接收實體位址，存取目標資料或指令。</li>\n</ol>\n\n<p><strong>【題解第二部分：Limit 與 Base 意義及順序不可顛倒原因】</strong></p>\n<ol style=\"margin-left: 1.5rem; line-height: 1.8;\">\n  <li><strong>兩大欄位物理意義：</strong>\n    <ul>\n      <li><code>limit</code>：該段程式或資料的實際長度邊界，用於實施記憶體邊界保護（Protection）。</li>\n      <li><code>base</code>：該分段被載入至實體記憶體時的第一個位元組的實體起始位址，用於動態重定位（Relocation）。</li>\n    </ul>\n  </li>\n  <li><strong>為何必須「先比 limit，後加 base」？</strong>\n    <ul>\n      <li><strong>邊界防護優先性：</strong> $d$ 是段內偏移量，只有當 $d < \text{limit}$ 時，$d$ 才是合法的段內存取。若不先檢查合法性就直接相加，非法越界位址將直接流入位址匯流排。</li>\n      <li><strong>防止越界污染與溢位：</strong> 若先執行 $\text{base} + d$，惡意或錯誤的巨大 $d$ 可能導致整數加法溢位（Integer Overflow）繞回合法範圍，或者算出的位址剛好落入相鄰的其他行程或作業系統核心區段內；若此時未即時攔截，可能會引發非法的記憶體竄改或權限穿透！</li>\n      <li>因此硬體邏輯設計強制規定：<strong>必須先通過比較器確認 $d < \text{limit}$ 合法，才允許將 base 與 d 合成實體位址送往記憶體</strong>。</li>\n    </ul>\n  </li>\n</ol>",
+      "rubric": [
+        "完整畫出 CPU <s, d> 暫存器與段表查表指針（3 分）",
+        "段表明確標註 limit 與 base 兩大欄位（2 分）",
+        "比較器明確標註 d < limit 以及 No 分支之 trap: addressing error 設陷（4 分）",
+        "加法器 base + d 正確輸出至 Physical Memory（3 分）",
+        "說明 limit/base 意義並解釋為何先比 limit 後加 base（3 分）"
+      ]
     }
   ],
   "flashcards": [
@@ -3591,6 +3616,13 @@ const OS_DEFAULT_DATA = {
       "front": "Unix inode 檔案索引架構由哪些類型的指標組成？",
       "back": "混合索引結構：\n1. **直接指標（Direct Blocks，通常 12 個）**：高速存取小型檔案。\n2. **單層間接指標（Single Indirect）**\n3. **雙層間接指標（Double Indirect）**\n4. **三層間接指標（Triple Indirect）**：擴展支援海量超大型檔案。",
       "scope": "final"
+    },
+    {
+      "id": "fc45",
+      "chapter": "ch6",
+      "scope": "final",
+      "front": "🔥【老師交代 100% 一定會考怎麼畫】手繪「分段硬體架構圖（Segmentation Hardware）」有哪五大核心元件與手繪口訣？",
+      "back": "【五大核心手繪元件】：\n1. **CPU 邏輯暫存器 `<s, d>`**（s 段號，d 位移）\n2. **段表（Segment Table）**：含 **`limit`**（段長）與 **`base`**（實體基底）\n3. **比較器 `<`**：檢查 **`d < limit`**，若 No 必拉出箭頭指向 **`trap: addressing error`**（漏畫必扣分！）\n4. **加法器 `+`**：合法時計算 **`base + d`**\n5. **實體記憶體（Physical Memory）**\n\n【滿分手繪口訣】：\n「**s 查段表取 limit 與 base ➔ d 與 limit 先比大小防越界 ➔ 越界 trap 設陷 ➔ 合法 base 加 d 進記憶體**」"
     }
   ]
 };
