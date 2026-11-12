@@ -21,16 +21,16 @@
     <nav class="nav-links">
       <button class="nav-btn active" data-tab="notes">章節核心重點</button>
       <button class="nav-btn" data-tab="exam-focal">高頻考點演練</button>
-      <button class="nav-btn" data-tab="simulator">甘特圖排程計算器</button>
+      <button class="nav-btn nav-midterm-only" data-tab="simulator" style="display: none;">甘特圖排程計算器</button>
       <button class="nav-btn" data-tab="quiz">全方位題庫演練</button>
       <button class="nav-btn" data-tab="essay">精選非選問答庫</button>
       <button class="nav-btn" data-tab="mistakes">錯題專攻本</button>
       <button class="nav-btn" data-tab="flashcards">觀念抽認卡</button>
       <button class="nav-btn" data-tab="extensions">擴充管理中心</button>
-      <button class="nav-btn" data-tab="ncu-exam" style="background: rgba(56, 189, 248, 0.15); border-color: var(--accent-cyan); color: #38bdf8; font-weight: 600;">中央研考題解 📄</button>
+      <button class="nav-btn nav-midterm-only" data-tab="ncu-exam" style="background: rgba(56, 189, 248, 0.15); border-color: var(--accent-cyan); color: #38bdf8; font-weight: 600; display: none;">中央研考題解 📄</button>
     </nav>
-    <a href="./中央大學研究所_作業系統歷年考題篩選與期中範圍詳解.docx" download="中央大學研究所_作業系統歷年考題篩選與期中範圍詳解.docx" class="btn btn-primary" style="margin-left: auto; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.85rem; font-weight: bold; border-radius: 6px; white-space: nowrap;">
-      📥 下載研考題解 Word
+    <a href="./中央大學研究所_作業系統歷年考題篩選與期中範圍詳解.docx" download="中央大學研究所_作業系統歷年考題篩選與期中範圍詳解.docx" class="btn btn-primary nav-midterm-only" id="btn-download-midterm-doc" style="margin-left: auto; text-decoration: none; display: none; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.85rem; font-weight: bold; border-radius: 6px; white-space: nowrap;">
+      📥 下載期中研考題解 Word
     </a>
   </header>
 
@@ -40,26 +40,26 @@
     <!-- 頂端學習指標橫條 -->
     <section class="stats-banner">
       <div class="stat-item">
-        <span class="stat-label">題庫正確率</span>
+        <span class="stat-label" id="stat-label-accuracy">期末題庫正確率</span>
         <span class="stat-value" id="stat-quiz-accuracy">0%</span>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="stat-progress-fill"></div>
         </div>
       </div>
       <div class="stat-item">
-        <span class="stat-label">已作答題數</span>
+        <span class="stat-label" id="stat-label-answered">期末題庫進度</span>
         <span class="stat-value" id="stat-quiz-answered">0 題</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">錯題累積</span>
+        <span class="stat-label" id="stat-label-mistakes">期末錯題累積</span>
         <span class="stat-value" id="stat-mistakes" style="color: var(--accent-rose);">0 題待複習</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">抽認卡掌握進度</span>
+        <span class="stat-label" id="stat-label-flashcards">期末抽認卡進度</span>
         <span class="stat-value" id="stat-flashcards" style="color: var(--accent-emerald);">0 張已掌握</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">非選大題掌握進度</span>
+        <span class="stat-label" id="stat-label-essays">期末非選掌握度</span>
         <span class="stat-value" id="stat-essays" style="color: var(--accent-cyan);">0 題已掌握</span>
       </div>
     </section>

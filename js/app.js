@@ -40,6 +40,16 @@ class OSMasterApp {
 
     this.initElements();
     this.initEvents();
+    // 初始依 scopeMode 控管頂部導覽列
+    const midtermNavElements = document.querySelectorAll('.nav-midterm-only');
+    midtermNavElements.forEach(el => {
+      if (this.scopeMode === 'final') {
+        el.style.display = 'none';
+      } else {
+        el.style.display = (el.tagName.toLowerCase() === 'a') ? 'inline-flex' : 'inline-block';
+      }
+    });
+
     this.renderAll();
   }
 
@@ -161,7 +171,17 @@ class OSMasterApp {
     if (confirm('確定要將系統資料重設為原始預設版本嗎？此動作將清除自訂新增的章節與題目。')) {
       localStorage.removeItem(this.storageKey);
       this.data = JSON.parse(JSON.stringify(OS_DEFAULT_DATA));
-      this.renderAll();
+      // 初始依 scopeMode 控管頂部導覽列
+    const midtermNavElements = document.querySelectorAll('.nav-midterm-only');
+    midtermNavElements.forEach(el => {
+      if (this.scopeMode === 'final') {
+        el.style.display = 'none';
+      } else {
+        el.style.display = (el.tagName.toLowerCase() === 'a') ? 'inline-flex' : 'inline-block';
+      }
+    });
+
+    this.renderAll();
       alert('已成功恢復預設教材資料！');
     }
   }
@@ -654,57 +674,112 @@ class OSMasterApp {
   // 總體指標橫條渲染
   // ==========================================
   updateStatsBanner() {
-    const totalQ = this.data.quizQuestions.length;
-    const answered = this.progress.answeredCount || 0;
-    const correct = this.progress.correctCount || 0;
-    const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
-    const mistakes = this.progress.mistakeIds ? this.progress.mistakeIds.length : 0;
-    const masteredFc = this.progress.masteredFlashcardIds ? this.progress.masteredFlashcardIds.length : 0;
-    const totalFc = this.data.flashcards.length;
+    const isFinalMode = (this.scopeMode === 'final');
+    const isMidtermMode = (this.scopeMode === 'midterm');
 
+    // 依模式過濾題目
+    let targetQuestions = this.data.quizQuestions;
+    let targetFlashcards = this.data.flashcards;
+    let targetEssays = this.data.essayQuestions || [];
+
+    if (isFinalMode) {
+      targetQuestions = targetQuestions.filter(q => q.scope === 'final' || ['ch6','ch7','ch8'].includes(q.chapter));
+      targetFlashcards = targetFlashcards.filter(f => f.scope === 'final' || ['ch6','ch7','ch8'].includes(f.chapter));
+      targetEssays = targetEssays.filter(e => e.scope === 'final' || ['ch6','ch7','ch8'].includes(e.chapter));
+    } else if (isMidtermMode) {
+      targetQuestions = targetQuestions.filter(q => q.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(q.chapter));
+      targetFlashcards = targetFlashcards.filter(f => f.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(f.chapter));
+      targetEssays = targetEssays.filter(e => e.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(e.chapter));
+    }
+
+    const totalQ = targetQuestions.length;
+    const targetQIdSet = new Set(targetQuestions.map(q => q.id));
+
+    // 統計已作答與答對 (依目前範圍)
+    let answered = 0;
+    let correct = 0;
+    const userAnswers = this.progress.userAnswers || {};
+    targetQuestions.forEach(q => {
+      if (userAnswers[q.id] !== undefined) {
+        answered++;
+        if (userAnswers[q.id] === q.answer) {
+          correct++;
+        }
+      }
+    });
+
+    const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+
+    // 錯題累積 (僅算目標範圍)
+    const mistakeSet = new Set(this.progress.mistakeIds || []);
+    let mistakes = 0;
+    targetQuestions.forEach(q => {
+      if (mistakeSet.has(q.id)) mistakes++;
+    });
+
+    // 抽認卡已掌握數
+    const masteredFcSet = new Set(this.progress.masteredFlashcardIds || []);
+    let masteredFc = 0;
+    targetFlashcards.forEach(fc => {
+      if (masteredFcSet.has(fc.id)) masteredFc++;
+    });
+    const totalFc = targetFlashcards.length;
+
+    // 非選題已掌握數
+    const masteredEssaySet = new Set(this.progress.masteredEssayIds || []);
+    let masteredEssays = 0;
+    targetEssays.forEach(e => {
+      if (masteredEssaySet.has(e.id)) masteredEssays++;
+    });
+    const totalEssays = targetEssays.length;
+
+    // 更新數值顯示
     if (this.statQuizAccuracy) this.statQuizAccuracy.textContent = `${accuracy}%`;
     if (this.statQuizAnswered) this.statQuizAnswered.textContent = `${answered} / ${totalQ} 題`;
     if (this.statMistakes) this.statMistakes.textContent = `${mistakes} 題待複習`;
     if (this.statFlashcards) this.statFlashcards.textContent = `${masteredFc} / ${totalFc} 張已掌握`;
+    if (this.statEssays) this.statEssays.textContent = `${masteredEssays} / ${totalEssays} 題已掌握`;
 
-    // 非選題掌握統計
-    const totalEssays = (this.data.essayQuestions || []).length;
-    const masteredEssays = (this.progress.masteredEssayIds || []).length;
-    if (this.statEssays) {
-      this.statEssays.textContent = `${masteredEssays} / ${totalEssays} 題已掌握`;
-    }
-
-    // 統計選擇題各類別數量
-    const allQuiz = this.data.quizQuestions || [];
-    const quizCalcs = allQuiz.filter(q => q.category === 'calc').length;
-    const quizConcepts = allQuiz.filter(q => q.category === 'concept' || !q.category).length;
-    if (this.countQuizAll) this.countQuizAll.textContent = allQuiz.length;
-    if (this.countQuizCalc) this.countQuizCalc.textContent = quizCalcs;
-    if (this.countQuizConcept) this.countQuizConcept.textContent = quizConcepts;
-    if (this.countQuizMistakes) this.countQuizMistakes.textContent = (this.progress.mistakeIds || []).length;
-
-    // 統計非選題各類別數量
-    const allEssays = this.data.essayQuestions || [];
-    const essayCalcs = allEssays.filter(e => e.category === 'calc').length;
-    const essayConcepts = allEssays.filter(e => e.category === 'concept').length;
-    const essayDesigns = allEssays.filter(e => e.category === 'design').length;
-    if (this.countEssayAll) this.countEssayAll.textContent = allEssays.length;
-    if (this.countEssayCalc) this.countEssayCalc.textContent = essayCalcs;
-    if (this.countEssayConcept) this.countEssayConcept.textContent = essayConcepts;
-    if (this.countEssayDesign) this.countEssayDesign.textContent = essayDesigns;
-
-    const progressPct = Math.min(100, Math.round(((answered + masteredFc + masteredEssays) / (totalQ + totalFc + totalEssays || 1)) * 100));
     if (this.statProgressFill) {
-      this.statProgressFill.style.width = `${progressPct}%`;
+      const progressPercent = totalQ > 0 ? Math.round((answered / totalQ) * 100) : 0;
+      this.statProgressFill.style.width = `${progressPercent}%`;
     }
+
+    // 更新標籤文字以精確反映目前模式
+    const prefix = isFinalMode ? '期末' : (isMidtermMode ? '期中' : '全域');
+    const labelAcc = document.getElementById('stat-label-accuracy');
+    const labelAns = document.getElementById('stat-label-answered');
+    const labelMis = document.getElementById('stat-label-mistakes');
+    const labelFc = document.getElementById('stat-label-flashcards');
+    const labelEs = document.getElementById('stat-label-essays');
+
+    if (labelAcc) labelAcc.textContent = `${prefix}題庫正確率`;
+    if (labelAns) labelAns.textContent = `${prefix}題庫進度`;
+    if (labelMis) labelMis.textContent = `${prefix}錯題累積`;
+    if (labelFc) labelFc.textContent = `${prefix}抽認卡進度`;
+    if (labelEs) labelEs.textContent = `${prefix}非選掌握度`;
   }
 
-  // ==========================================
-  // Tab 1: 章節筆記核心導讀
-  // ==========================================
+
   setScopeMode(mode) {
     this.scopeMode = mode;
     localStorage.setItem('OS_EXAM_SCOPE_MODE', mode);
+
+    // 控制頂部導覽列期中專屬按鈕（甘特圖排程器、研考題解等）之顯隱
+    const midtermNavElements = document.querySelectorAll('.nav-midterm-only');
+    midtermNavElements.forEach(el => {
+      if (mode === 'final') {
+        el.style.display = 'none';
+      } else {
+        el.style.display = (el.tagName.toLowerCase() === 'a') ? 'inline-flex' : 'inline-block';
+      }
+    });
+
+    // 若當前停留在被隱藏的 tab（如 simulator 或 ncu-exam），自動切回 notes
+    const activeTab = document.querySelector('.nav-btn.active')?.getAttribute('data-tab');
+    if (mode === 'final' && ['simulator', 'ncu-exam'].includes(activeTab)) {
+      this.switchTab('notes');
+    }
 
     if (this.currentScopeModeText) {
       if (mode === 'final') {
@@ -770,6 +845,7 @@ class OSMasterApp {
     this.renderQuiz();
     this.renderEssayQuestions();
     this.renderFlashcard();
+    this.updateStatsBanner();
   }
 
   updateMidtermChaptersCollapseUI() {
@@ -3695,7 +3771,17 @@ do {
       }
       this.data = parsed;
       this.saveData();
-      this.renderAll();
+      // 初始依 scopeMode 控管頂部導覽列
+    const midtermNavElements = document.querySelectorAll('.nav-midterm-only');
+    midtermNavElements.forEach(el => {
+      if (this.scopeMode === 'final') {
+        el.style.display = 'none';
+      } else {
+        el.style.display = (el.tagName.toLowerCase() === 'a') ? 'inline-flex' : 'inline-block';
+      }
+    });
+
+    this.renderAll();
       alert('資料匯入成功！已更新所有章節與題庫。');
     } catch (err) {
       alert('匯入失敗：' + err.message);
