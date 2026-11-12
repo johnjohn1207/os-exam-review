@@ -10,20 +10,31 @@ const PROCESS_COLORS = [
 
 class OSMasterApp {
   constructor() {
-    this.storageKey = 'OS_MASTER_DATA_V6';
+    this.storageKey = 'OS_MASTER_DATA_V7';
     this.progressKey = 'OS_MASTER_PROGRESS_V1';
     this.data = this.loadData();
     this.progress = this.loadProgress();
 
-    this.currentChapterId = this.data.chapters[0]?.id || 'ch1';
+    // 考試範圍模式：'final' (期末考主力，預設) | 'all' (全開) | 'midterm' (期中存檔)
+    this.scopeMode = localStorage.getItem('OS_EXAM_SCOPE_MODE') || 'final';
+    this.currentChapterId = (this.scopeMode === 'midterm') ? 'ch1' : 'ch6';
+    this.midtermChaptersExpanded = (this.scopeMode !== 'final');
+    this.midtermFocalExpanded = false;
+
     this.currentFlashcardIdx = 0;
     this.flashcardIsFlipped = false;
     this.currentQuizFilter = 'all';
-    this.currentQuizCategoryFilter = 'all'; // 'all' | 'calc' | 'concept'
+    this.currentQuizCategoryFilter = 'all'; // 'all' | 'calc' | 'concept' | 'mistakes'
+    this.currentQuizScopeFilter = (this.scopeMode === 'all') ? 'all' : (this.scopeMode === 'midterm' ? 'midterm' : 'final');
+
     this.currentEssayChapterFilter = 'all';
     this.currentEssayCategoryFilter = 'all'; // 'all' | 'calc' | 'concept' | 'design'
+    this.currentEssayScopeFilter = (this.scopeMode === 'all') ? 'all' : (this.scopeMode === 'midterm' ? 'midterm' : 'final');
     this.currentEssaySearch = '';
     this.allEssayAnswersExpanded = false;
+
+    this.currentFlashcardScopeFilter = (this.scopeMode === 'all') ? 'all' : (this.scopeMode === 'midterm' ? 'midterm' : 'final');
+
     this.currentPyramidMode = 'study'; // 'study' | 'quiz2' | 'quizAll'
     this.pyramidUserAnswers = {};
 
@@ -37,23 +48,29 @@ class OSMasterApp {
   // ==========================================
   loadData() {
     try {
-      const stored = localStorage.getItem(this.storageKey);
+      // 優先載入 V7，若無則自舊版 V6 遷移自訂資料
+      let stored = localStorage.getItem(this.storageKey);
+      if (!stored) {
+        const v6 = localStorage.getItem('OS_MASTER_DATA_V6');
+        if (v6) {
+          stored = v6;
+        }
+      }
+
       if (stored) {
         const parsed = JSON.parse(stored);
         let updated = false;
 
-        // 同步預設章節內容（CH1 ~ CH5），同時保留使用者自訂新增章節
+        // 依 OS_DEFAULT_DATA 為主，同步所有章節與 scope 屬性
         const defMap = new Map(OS_DEFAULT_DATA.chapters.map(c => [c.id, c]));
         const mergedChapters = [];
         const seenIds = new Set();
 
-        // 依 OS_DEFAULT_DATA 順序優先加入預設章節（確保 ch1~ch5 順序正確）
         OS_DEFAULT_DATA.chapters.forEach(defCh => {
           mergedChapters.push(JSON.parse(JSON.stringify(defCh)));
           seenIds.add(defCh.id);
         });
 
-        // 加入使用者自訂章節（若有）
         (parsed.chapters || []).forEach(userCh => {
           if (!seenIds.has(userCh.id)) {
             mergedChapters.push(userCh);
@@ -63,7 +80,7 @@ class OSMasterApp {
         });
         parsed.chapters = mergedChapters;
 
-        // 同步更新抽認卡
+        // 同步抽認卡
         const existingFcIds = new Set((parsed.flashcards || []).map(f => f.id));
         OS_DEFAULT_DATA.flashcards.forEach(defFc => {
           if (!existingFcIds.has(defFc.id)) {
@@ -72,7 +89,7 @@ class OSMasterApp {
           }
         });
 
-        // 同步更新題庫
+        // 同步題庫
         const existingQIds = new Set((parsed.quizQuestions || []).map(q => q.id));
         OS_DEFAULT_DATA.quizQuestions.forEach(defQ => {
           if (!existingQIds.has(defQ.id)) {
@@ -81,7 +98,7 @@ class OSMasterApp {
           }
         });
 
-        // 同步更新非選題 (essayQuestions) - 確保預設題庫保持最新並保留使用者自訂非選題
+        // 同步非選題
         const essayMap = new Map((parsed.essayQuestions || []).map(e => [e.id, e]));
         const mergedEssays = [];
         (OS_DEFAULT_DATA.essayQuestions || []).forEach(defE => {
@@ -98,7 +115,7 @@ class OSMasterApp {
         return parsed;
       }
     } catch (e) {
-      console.warn('載入自訂資料失敗，採用預設值', e);
+      console.warn('載入 LocalStorage 失敗，套用預設資料', e);
     }
     return JSON.parse(JSON.stringify(OS_DEFAULT_DATA));
   }
@@ -166,6 +183,24 @@ class OSMasterApp {
 
     // 筆記區
     this.chapterNavContainer = document.getElementById('chapter-nav-container');
+    this.chapterNavFinal = document.getElementById('chapter-nav-final');
+    this.chapterNavMidterm = document.getElementById('chapter-nav-midterm');
+    this.btnToggleMidtermChapters = document.getElementById('btn-toggle-midterm-chapters');
+    this.midtermChaptersBody = document.getElementById('midterm-chapters-body');
+    this.midtermCollapseIndicator = document.getElementById('midterm-collapse-indicator');
+
+    this.btnToggleMidtermFocal = document.getElementById('btn-toggle-midterm-focal');
+    this.midtermFocalCollapseBody = document.getElementById('midterm-focal-collapse-body');
+    this.midtermFocalCollapseIndicator = document.getElementById('midterm-focal-collapse-indicator');
+
+    this.btnScopeFinal = document.getElementById('btn-scope-final');
+    this.btnScopeAll = document.getElementById('btn-scope-all');
+    this.btnScopeMidterm = document.getElementById('btn-scope-midterm');
+    this.currentScopeModeText = document.getElementById('current-scope-mode-text');
+
+    this.quizScopePills = document.querySelectorAll('#quiz-scope-pills .filter-pill');
+    this.essayScopePills = document.querySelectorAll('#essay-scope-pills .filter-pill');
+    this.fcScopePills = document.querySelectorAll('#fc-scope-pills .filter-pill');
     this.chapterContentContainer = document.getElementById('chapter-content-container');
     this.noteSearchInput = document.getElementById('note-search-input');
 
@@ -667,37 +702,204 @@ class OSMasterApp {
   // ==========================================
   // Tab 1: 章節筆記核心導讀
   // ==========================================
-  renderChapterNav() {
-    if (!this.chapterNavContainer) return;
-    this.chapterNavContainer.innerHTML = '';
+  setScopeMode(mode) {
+    this.scopeMode = mode;
+    localStorage.setItem('OS_EXAM_SCOPE_MODE', mode);
 
-    this.data.chapters.forEach(ch => {
-      const btn = document.createElement('button');
-      btn.className = `chapter-btn ${ch.id === this.currentChapterId ? 'active' : ''}`;
-      btn.textContent = ch.title.split(' ')[0] + ' ' + (ch.title.split(' ')[1] || '');
-      btn.title = ch.title;
-      btn.addEventListener('click', () => {
-        this.currentChapterId = ch.id;
-        this.renderChapterNav();
-        this.renderChapterNotes();
-      });
-      this.chapterNavContainer.appendChild(btn);
+    if (this.currentScopeModeText) {
+      if (mode === 'final') {
+        this.currentScopeModeText.innerHTML = '🔥 期末考衝刺模式（期中考已摺疊收合）';
+        this.currentScopeModeText.style.color = 'var(--accent-cyan)';
+      } else if (mode === 'all') {
+        this.currentScopeModeText.innerHTML = '📂 全範圍檢視模式（期中與期末全部展開）';
+        this.currentScopeModeText.style.color = 'var(--accent-emerald)';
+      } else {
+        this.currentScopeModeText.innerHTML = '📁 期中考複習存檔模式（回顧 CH1 ~ CH5）';
+        this.currentScopeModeText.style.color = '#94a3b8';
+      }
+    }
+
+    // 更新頂部按鈕狀態
+    [this.btnScopeFinal, this.btnScopeAll, this.btnScopeMidterm].forEach(b => b?.classList.remove('active'));
+    if (mode === 'final') this.btnScopeFinal?.classList.add('active');
+    else if (mode === 'all') this.btnScopeAll?.classList.add('active');
+    else if (mode === 'midterm') this.btnScopeMidterm?.classList.add('active');
+
+    // 折疊面板依模式自動展開或收合
+    if (mode === 'final') {
+      this.midtermChaptersExpanded = false;
+      this.midtermFocalExpanded = false;
+      if (['ch1', 'ch2', 'ch3', 'ch4', 'ch5'].includes(this.currentChapterId)) {
+        this.currentChapterId = 'ch6';
+      }
+      this.currentQuizScopeFilter = 'final';
+      this.currentEssayScopeFilter = 'final';
+      this.currentFlashcardScopeFilter = 'final';
+    } else if (mode === 'all') {
+      this.midtermChaptersExpanded = true;
+      this.midtermFocalExpanded = true;
+      this.currentQuizScopeFilter = 'all';
+      this.currentEssayScopeFilter = 'all';
+      this.currentFlashcardScopeFilter = 'all';
+    } else if (mode === 'midterm') {
+      this.midtermChaptersExpanded = true;
+      this.midtermFocalExpanded = true;
+      if (!['ch1', 'ch2', 'ch3', 'ch4', 'ch5'].includes(this.currentChapterId)) {
+        this.currentChapterId = 'ch1';
+      }
+      this.currentQuizScopeFilter = 'midterm';
+      this.currentEssayScopeFilter = 'midterm';
+      this.currentFlashcardScopeFilter = 'midterm';
+    }
+
+    // 同步更新題庫、非選、抽認卡膠囊狀態
+    this.quizScopePills?.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-scope') === this.currentQuizScopeFilter);
+    });
+    this.essayScopePills?.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-scope') === this.currentEssayScopeFilter);
+    });
+    this.fcScopePills?.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-scope') === this.currentFlashcardScopeFilter);
     });
 
-    // 同步更新測驗章節選單
+    this.updateMidtermChaptersCollapseUI();
+    this.updateMidtermFocalCollapseUI();
+    this.renderChapterNav();
+    this.renderChapterNotes();
+    this.renderQuiz();
+    this.renderEssayQuestions();
+    this.renderFlashcard();
+  }
+
+  updateMidtermChaptersCollapseUI() {
+    if (this.midtermChaptersBody) {
+      this.midtermChaptersBody.style.display = this.midtermChaptersExpanded ? 'block' : 'none';
+    }
+    if (this.midtermCollapseIndicator) {
+      this.midtermCollapseIndicator.innerHTML = this.midtermChaptersExpanded 
+        ? '已展開（點擊收合） ▴' 
+        : '已摺疊收合（點擊展開） ▾';
+      this.midtermCollapseIndicator.style.color = this.midtermChaptersExpanded ? 'var(--accent-cyan)' : 'var(--text-muted)';
+    }
+  }
+
+  updateMidtermFocalCollapseUI() {
+    if (this.midtermFocalCollapseBody) {
+      this.midtermFocalCollapseBody.style.display = this.midtermFocalExpanded ? 'block' : 'none';
+    }
+    if (this.midtermFocalCollapseIndicator) {
+      this.midtermFocalCollapseIndicator.innerHTML = this.midtermFocalExpanded 
+        ? '已展開（點擊收合） ▴' 
+        : '已摺疊收合（點擊展開） ▾';
+      this.midtermFocalCollapseIndicator.style.color = this.midtermFocalExpanded ? 'var(--accent-cyan)' : 'var(--text-muted)';
+    }
+  }
+
+  renderChapterNav() {
+    this.updateMidtermChaptersCollapseUI();
+    this.updateMidtermFocalCollapseUI();
+
+    const finalChapters = this.data.chapters.filter(c => c.scope === 'final' || ['ch6', 'ch7', 'ch8'].includes(c.id));
+    const midtermChapters = this.data.chapters.filter(c => c.scope === 'midterm' || ['ch1', 'ch2', 'ch3', 'ch4', 'ch5'].includes(c.id));
+
+    // 渲染期末考焦點章節按鈕
+    if (this.chapterNavFinal) {
+      this.chapterNavFinal.innerHTML = '';
+      finalChapters.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.className = `chapter-btn ${ch.id === this.currentChapterId ? 'active' : ''}`;
+        btn.innerHTML = `<span style="color:var(--accent-cyan); font-weight:bold;">${ch.id.toUpperCase()}</span> ${ch.title.split(' ')[1] || ''}`;
+        btn.title = ch.title;
+        btn.addEventListener('click', () => {
+          this.currentChapterId = ch.id;
+          this.renderChapterNav();
+          this.renderChapterNotes();
+        });
+        this.chapterNavFinal.appendChild(btn);
+      });
+    }
+
+    // 渲染期中考存檔章節按鈕
+    if (this.chapterNavMidterm) {
+      this.chapterNavMidterm.innerHTML = '';
+      midtermChapters.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.className = `chapter-btn ${ch.id === this.currentChapterId ? 'active' : ''}`;
+        btn.style.opacity = (ch.id === this.currentChapterId) ? '1' : '0.85';
+        btn.innerHTML = `<span style="color:var(--text-muted); font-weight:600;">${ch.id.toUpperCase()}</span> ${ch.title.split(' ')[1] || ''}`;
+        btn.title = ch.title;
+        btn.addEventListener('click', () => {
+          this.currentChapterId = ch.id;
+          this.renderChapterNav();
+          this.renderChapterNotes();
+        });
+        this.chapterNavMidterm.appendChild(btn);
+      });
+    }
+
+    // 相容舊容器 (若存在)
+    if (this.chapterNavContainer) {
+      this.chapterNavContainer.innerHTML = '';
+    }
+
+    // 更新測驗選單 (以 optgroup 分類)
     if (this.quizChapterSelect) {
       const currentVal = this.quizChapterSelect.value;
-      this.quizChapterSelect.innerHTML = '<option value="all">全章節期中考題庫（綜合模擬）</option>';
-      this.data.chapters.forEach(ch => {
+      this.quizChapterSelect.innerHTML = '<option value="all">全章節題庫（綜合模擬測驗）</option>';
+
+      const grpFinal = document.createElement('optgroup');
+      grpFinal.label = '🔥 期末考核心範圍 (CH6 ~ CH8)';
+      finalChapters.forEach(ch => {
         const opt = document.createElement('option');
         opt.value = ch.id;
-        opt.textContent = ch.title;
-        this.quizChapterSelect.appendChild(opt);
+        opt.textContent = `${ch.title}`;
+        grpFinal.appendChild(opt);
       });
+      this.quizChapterSelect.appendChild(grpFinal);
+
+      const grpMidterm = document.createElement('optgroup');
+      grpMidterm.label = '📁 期中考範圍存檔 (CH1 ~ CH5)';
+      midtermChapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = `${ch.title}`;
+        grpMidterm.appendChild(opt);
+      });
+      this.quizChapterSelect.appendChild(grpMidterm);
+
       this.quizChapterSelect.value = currentVal || 'all';
     }
 
-    // 同步更新新增題目下拉選單
+    // 更新非選題選單 (以 optgroup 分類)
+    if (this.essayChapterSelect) {
+      const currentVal = this.essayChapterSelect.value;
+      this.essayChapterSelect.innerHTML = '<option value="all">全部章節 (CH1 ~ CH8)</option>';
+
+      const grpFinal = document.createElement('optgroup');
+      grpFinal.label = '🔥 期末考核心範圍 (CH6 ~ CH8)';
+      finalChapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = `${ch.title}`;
+        grpFinal.appendChild(opt);
+      });
+      this.essayChapterSelect.appendChild(grpFinal);
+
+      const grpMidterm = document.createElement('optgroup');
+      grpMidterm.label = '📁 期中考範圍存檔 (CH1 ~ CH5)';
+      midtermChapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = `${ch.title}`;
+        grpMidterm.appendChild(opt);
+      });
+      this.essayChapterSelect.appendChild(grpMidterm);
+
+      this.essayChapterSelect.value = currentVal || 'all';
+    }
+
+    // 更新新增題目下拉選單
     const targetSelect = document.getElementById('new-q-chapter');
     if (targetSelect) {
       targetSelect.innerHTML = '';
@@ -3125,6 +3327,25 @@ do {
     if (!this.quizListContainer) return;
     let questions = this.data.quizQuestions;
 
+    // 更新範圍統計計數
+    const finalCount = this.data.quizQuestions.filter(q => q.scope === 'final' || ['ch6','ch7','ch8'].includes(q.chapter)).length;
+    const midtermCount = this.data.quizQuestions.filter(q => q.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(q.chapter)).length;
+    const totalCount = this.data.quizQuestions.length;
+
+    const countFinalEl = document.getElementById('count-quiz-scope-final');
+    if (countFinalEl) countFinalEl.textContent = finalCount;
+    const countMidEl = document.getElementById('count-quiz-scope-midterm');
+    if (countMidEl) countMidEl.textContent = midtermCount;
+    const countTotalEl = document.getElementById('count-quiz-total-all');
+    if (countTotalEl) countTotalEl.textContent = totalCount;
+
+    // 考試範圍過濾
+    if (this.currentQuizScopeFilter === 'final') {
+      questions = questions.filter(q => q.scope === 'final' || ['ch6','ch7','ch8'].includes(q.chapter));
+    } else if (this.currentQuizScopeFilter === 'midterm') {
+      questions = questions.filter(q => q.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(q.chapter));
+    }
+
     if (this.currentQuizFilter !== 'all') {
       questions = questions.filter(q => q.chapter === this.currentQuizFilter);
     }
@@ -3338,8 +3559,35 @@ do {
   // ==========================================
   // Tab 6: 觀念抽認卡 (Flashcards)
   // ==========================================
+  getFilteredFlashcards() {
+    let list = this.data.flashcards || [];
+    if (this.currentFlashcardScopeFilter === 'final') {
+      list = list.filter(f => f.scope === 'final' || ['ch6','ch7','ch8'].includes(f.chapter));
+    } else if (this.currentFlashcardScopeFilter === 'midterm') {
+      list = list.filter(f => f.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(f.chapter));
+    }
+    return list;
+  }
+
   renderFlashcard() {
-    const list = this.data.flashcards;
+    // 更新抽認卡範圍計數
+    const finalFcCount = (this.data.flashcards || []).filter(f => f.scope === 'final' || ['ch6','ch7','ch8'].includes(f.chapter)).length;
+    const midtermFcCount = (this.data.flashcards || []).filter(f => f.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(f.chapter)).length;
+    const totalFcCount = (this.data.flashcards || []).length;
+
+    const fcFinalEl = document.getElementById('count-fc-scope-final');
+    if (fcFinalEl) fcFinalEl.textContent = finalFcCount;
+    const fcMidEl = document.getElementById('count-fc-scope-midterm');
+    if (fcMidEl) fcMidEl.textContent = midtermFcCount;
+    const fcTotalEl = document.getElementById('count-fc-scope-all');
+    if (fcTotalEl) fcTotalEl.textContent = totalFcCount;
+
+    const list = this.getFilteredFlashcards();
+    if (!list || list.length === 0) {
+      if (this.flashcardContent) this.flashcardContent.textContent = '此範圍內暫無抽認卡。';
+      if (this.flashcardIndicator) this.flashcardIndicator.textContent = '0 / 0';
+      return;
+    }
     if (!list || list.length === 0) {
       if (this.flashcardContent) this.flashcardContent.textContent = '暫無抽認卡。';
       return;
@@ -3374,7 +3622,7 @@ do {
   }
 
   flipFlashcard() {
-    const list = this.data.flashcards;
+    const list = this.getFilteredFlashcards();
     if (!list || list.length === 0) return;
     const fc = list[this.currentFlashcardIdx];
 
@@ -3393,14 +3641,14 @@ do {
   }
 
   navigateFlashcard(offset) {
-    const list = this.data.flashcards;
+    const list = this.getFilteredFlashcards();
     if (!list || list.length === 0) return;
     this.currentFlashcardIdx = (this.currentFlashcardIdx + offset + list.length) % list.length;
     this.renderFlashcard();
   }
 
   toggleMasterFlashcard() {
-    const list = this.data.flashcards;
+    const list = this.getFilteredFlashcards();
     if (!list || list.length === 0) return;
     const fc = list[this.currentFlashcardIdx];
 
@@ -3553,6 +3801,25 @@ do {
   renderEssayQuestions() {
     if (!this.essayListContainer) return;
     let questions = this.data.essayQuestions || [];
+
+    // 更新非選題範圍統計計數
+    const finalEssayCount = (this.data.essayQuestions || []).filter(e => e.scope === 'final' || ['ch6','ch7','ch8'].includes(e.chapter)).length;
+    const midtermEssayCount = (this.data.essayQuestions || []).filter(e => e.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(e.chapter)).length;
+    const totalEssayCount = (this.data.essayQuestions || []).length;
+
+    const countFinalEssayEl = document.getElementById('count-essay-scope-final');
+    if (countFinalEssayEl) countFinalEssayEl.textContent = finalEssayCount;
+    const countMidEssayEl = document.getElementById('count-essay-scope-midterm');
+    if (countMidEssayEl) countMidEssayEl.textContent = midtermEssayCount;
+    const countTotalEssayEl = document.getElementById('count-essay-total-all');
+    if (countTotalEssayEl) countTotalEssayEl.textContent = totalEssayCount;
+
+    // 範圍過濾
+    if (this.currentEssayScopeFilter === 'final') {
+      questions = questions.filter(e => e.scope === 'final' || ['ch6','ch7','ch8'].includes(e.chapter));
+    } else if (this.currentEssayScopeFilter === 'midterm') {
+      questions = questions.filter(e => e.scope === 'midterm' || ['ch1','ch2','ch3','ch4','ch5'].includes(e.chapter));
+    }
 
     // 章節過濾
     if (this.currentEssayChapterFilter !== 'all') {
@@ -3741,3 +4008,7 @@ window.addEventListener('load', () => {
     window.app.renderMath(document.body);
   }
 });
+
+if (typeof window !== 'undefined') {
+  window.OSMasterApp = OSMasterApp;
+}

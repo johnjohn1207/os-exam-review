@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OS Master — 作業系統期中考互動複習系統</title>
+  <title>OS Master — 作業系統全能複習系統（期末衝刺 / 期中存檔）</title>
   <link rel="stylesheet" href="css/style.css?v=20261028_v6">
   <!-- 數學符號與公式排版 (KaTeX) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -16,14 +16,14 @@
   <header class="navbar">
     <div class="brand">
       <span class="brand-title">OS Master</span>
-      <span class="brand-badge">作業系統期中考複習系統</span>
+      <span class="brand-badge" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #ffffff;">期末衝刺中 🔥</span>
     </div>
     <nav class="nav-links">
       <button class="nav-btn active" data-tab="notes">章節核心重點</button>
       <button class="nav-btn" data-tab="exam-focal">高頻考點演練</button>
       <button class="nav-btn" data-tab="simulator">甘特圖排程計算器</button>
-      <button class="nav-btn" data-tab="quiz">期中考刷題庫</button>
-      <button class="nav-btn" data-tab="essay">期中非選問答庫</button>
+      <button class="nav-btn" data-tab="quiz">全方位題庫演練</button>
+      <button class="nav-btn" data-tab="essay">精選非選問答庫</button>
       <button class="nav-btn" data-tab="mistakes">錯題專攻本</button>
       <button class="nav-btn" data-tab="flashcards">觀念抽認卡</button>
       <button class="nav-btn" data-tab="extensions">擴充管理中心</button>
@@ -64,6 +64,22 @@
       </div>
     </section>
 
+    <!-- 全域考試範圍控制列 (Exam Scope Switcher) -->
+    <section class="exam-scope-bar card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-left: 4px solid var(--accent-cyan); background: var(--bg-card);">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.25rem;">🎯</span>
+        <div>
+          <div style="font-weight: 700; font-size: 1rem; color: var(--text-main);">目前複習模式：<span id="current-scope-mode-text" style="color: var(--accent-cyan);">🔥 期末考衝刺模式（期中考已摺疊收合）</span></div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">期中考範圍（CH1 ~ CH5）已完成並預設摺疊收合，可隨時點擊切換或展開查閱</div>
+        </div>
+      </div>
+      <div class="scope-btn-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn active" id="btn-scope-final" onclick="app.setScopeMode('final')" style="font-weight: 600;">🔥 期末考衝刺（期中已摺疊）</button>
+        <button class="btn" id="btn-scope-all" onclick="app.setScopeMode('all')">📂 全範圍檢視（全部展開）</button>
+        <button class="btn" id="btn-scope-midterm" onclick="app.setScopeMode('midterm')">📁 期中考複習存檔</button>
+      </div>
+    </section>
+
     <!-- Tab 1: 章節核心重點 -->
     <section class="tab-content active" id="tab-notes">
       <div class="page-header">
@@ -73,7 +89,36 @@
         </div>
       </div>
 
-      <div class="chapter-nav" id="chapter-nav-container"></div>
+            <!-- 章節導覽分組容器 -->
+      <div class="chapter-scope-container">
+        <!-- 期末考焦點章節 (CH6 ~ CH8) -->
+        <div style="margin-bottom: 0.75rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>🔥</span> 期末考核心章節 (CH6 ~ CH8 · 當前衝刺主力)
+            </span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.15); color: var(--accent-cyan);">期末考焦點</span>
+          </div>
+          <div class="chapter-nav" id="chapter-nav-final"></div>
+        </div>
+
+        <!-- 期中考範圍可摺疊面板 (CH1 ~ CH5) -->
+        <div class="collapsible-scope-box" id="midterm-chapters-box" style="margin-bottom: 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(30, 41, 59, 0.4); overflow: hidden;">
+          <div class="collapsible-header" id="btn-toggle-midterm-chapters" style="padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; background: rgba(51, 65, 85, 0.3); transition: background 0.2s;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1rem;">📁</span>
+              <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">期中考範圍章節 (CH1 ~ CH5 · 已結束存檔)</span>
+              <span class="badge badge-tag" style="font-size: 0.75rem;">可隨時查閱</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span id="midterm-collapse-indicator" style="font-size: 0.82rem; color: var(--text-muted);">已摺疊收合 (點擊展開) ▾</span>
+            </div>
+          </div>
+          <div class="collapsible-body" id="midterm-chapters-body" style="display: none; padding: 0.75rem 1rem; border-top: 1px dashed var(--border-color);">
+            <div class="chapter-nav" id="chapter-nav-midterm"></div>
+          </div>
+        </div>
+      </div>
 
       <div class="search-box-wrap">
         <input type="text" id="note-search-input" class="search-input" placeholder="搜尋關鍵字（例如：DMA、護衛效應、fork、緩衝區、中斷）..." />
@@ -84,12 +129,379 @@
 
     <!-- Tab 2: 高頻考點演練 (記憶體金字塔 + 排程器對照表) -->
     <section class="tab-content" id="tab-exam-focal">
+
       <div class="page-header">
         <div>
           <h1 class="page-title">高頻考點演練專區</h1>
           <p class="page-subtitle">針對課堂提示之「記憶體階層填空（必考）」與「三大排程器比較」進行專項突破</p>
         </div>
       </div>
+
+      <!-- 期末考高頻考點突破專區 -->
+      <div class="final-focal-section" style="margin-bottom: 2rem;">
+
+        <!-- 🎨 期末考必考手繪結構圖特攻導覽 -->
+        <div class="card" style="margin-bottom: 1.5rem; border: 2px solid var(--accent-cyan); background: rgba(14, 165, 233, 0.08);">
+          <div class="card-title">
+            <span style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-cyan);">
+              <span style="font-size: 1.25rem;">🎨</span> 期末考必考手繪圖結構特攻（Drawings & Architecture Master）
+            </span>
+            <span class="badge badge-tag" style="background: var(--accent-cyan); color: #0f172a; font-weight: bold;">老師投影片必考畫圖</span>
+          </div>
+          <div class="alert-box" style="background: rgba(30, 41, 59, 0.6); border-left-color: var(--accent-cyan);">
+            <strong>考前畫圖手繪衝刺提醒：</strong> 根據學校投影片重點，期末考問答大題常考<strong>「請手繪以下架構圖並標註關鍵欄位、訊號線與判斷流程」</strong>。本系統已完整將老師投影片（OS-ch06, OS-ch07, OS-ch08）核心原圖嵌入各章導讀中，以下為必考手繪題清單：
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            <!-- CH6 必考畫圖 -->
+            <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem; font-size: 0.95rem;">CH6 記憶體管理手繪考點</div>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.7; color: var(--text-main);">
+                <li><strong>Base/Limit 硬體保護圖</strong>（Slide 5，比較 >= Base, < Base+Limit）</li>
+                <li><strong>MMU 動態重定位流程</strong>（Slide 11，加法器 + Relocation Register）</li>
+                <li><strong>分段硬體架構圖</strong>（Slide 28，Segment Table, Limit/Base 判斷）</li>
+                <li><strong>分頁硬體位址轉換圖</strong>（Slide 34，p 查 Page Table 得 f 拼接 d）</li>
+                <li><strong>具備 TLB 之分頁查詢架構</strong>（Slide 42，TLB Hit vs Miss 流程）</li>
+                <li><strong>二階分頁位址轉換圖</strong>（Slide 50 & 52，p1, p2, d 多層索引）</li>
+                <li><strong>反向頁表架構圖</strong>（Slide 58，全域單一表，pid, p 查 f）</li>
+              </ul>
+            </div>
+
+            <!-- CH7 必考畫圖 -->
+            <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-weight: 700; color: #a78bfa; margin-bottom: 0.5rem; font-size: 0.95rem;">CH7 虛擬記憶體手繪考點</div>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.7; color: var(--text-main);">
+                <li><strong>虛擬位址空間展開圖</strong>（Slide 7，Stack 與 Heap 對向生長）</li>
+                <li><strong>🔥 處理分頁錯誤 6 步驟時序圖</strong>（Slide 15，100% 必考手繪大題）</li>
+                <li><strong>寫入時複製 COW 前後對照</strong>（Slide 21 & 22，共用 vs 獨立頁面）</li>
+                <li><strong>貝拉迪異常 Belady 曲線</strong>（Slide 29，缺頁反增向上波峰）</li>
+                <li><strong>雙向堆疊維護 LRU 圖</strong>（Slide 37，最近存取移至 Top）</li>
+                <li><strong>第二次機會時鐘演算法圖</strong>（Slide 39，指針環狀掃描清 0）</li>
+                <li><strong>🔥 系統顛簸 CPU 利用率曲線</strong>（Slide 49，懸崖式崩潰急跌）</li>
+                <li><strong>工作集模型視窗 Delta 圖</strong>（Slide 51，WS(t) 相異頁面集合）</li>
+                <li><strong>伙伴系統二分分割樹狀圖</strong>（Slide 58，256K 二分至 32K 與合併）</li>
+              </ul>
+            </div>
+
+            <!-- CH8 必考畫圖 -->
+            <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-weight: 700; color: #34d399; margin-bottom: 0.5rem; font-size: 0.95rem;">CH8 次級儲存手繪考點</div>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.7; color: var(--text-main);">
+                <li><strong>🔥 移動磁頭磁碟機械結構圖</strong>（Slide 4，Cylinder, Track, Sector, Arm）</li>
+                <li><strong>NAS vs. SAN 架構拓撲對照</strong>（Slide 13 & 14，檔案層級 vs 區塊層級）</li>
+                <li><strong>🔥 磁碟排程磁頭折線圖</strong>（Slide 19 SSTF, Slide 21 SCAN, Slide 23 C-SCAN）</li>
+                <li><strong>🔥 RAID 各等級區塊佈局圖</strong>（Slide 30，RAID 0, 1, 4, 5, 6 同位碼分佈）</li>
+                <li><strong>RAID 0+1 vs. 1+0 結構樹對比</strong>（Slide 31，容錯可靠度樹狀拓撲）</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-box" style="border-left-color: var(--accent-cyan); background: rgba(14, 165, 233, 0.1); margin-bottom: 1.5rem;">
+          <strong style="color: var(--accent-cyan);">🔥 期末考高頻命題焦點：</strong>
+          針對作業系統期末考核心考點（行程同步、記憶體分頁與 TLB EAT、頁面置換演算法、磁碟排程與 RAID 陣列）進行專項深度突破，掌握推導公式與比較矩陣。
+        </div>
+
+        <!-- 期末考點一：臨界區間三準則與同步工具全景對照 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <span>期末考點一：臨界區間三準則與四大同步工具全景對照（Synchronization Tools）</span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.2); color: var(--accent-cyan);">期末大題必考</span>
+          </div>
+          <div class="alert-box info">
+            <strong>核心理論準則：</strong> 臨界區問題之解法必須同時嚴格滿足：<strong>互斥（Mutual Exclusion）</strong>、<strong>進展（Progress）</strong>與<strong>有限等待（Bounded Waiting）</strong>。
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th style="min-width: 130px;">同步工具類型</th>
+                  <th style="min-width: 170px;">實作機制與底層支援</th>
+                  <th style="min-width: 160px;">忙碌等待 (Busy Waiting)</th>
+                  <th style="min-width: 180px;">核心優勢與適用場景</th>
+                  <th style="min-width: 180px;">主要缺陷與潛在風險</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Peterson 演算法<br/>(Peterson's Algorithm)</strong></td>
+                  <td>純軟體演算法，利用 <code>flag[2]</code> 與 <code>turn</code> 共享變數交替判定</td>
+                  <td>是（while 迴圈忙碌自旋）</td>
+                  <td>數學上嚴格證明滿足互斥、進展與有限等待；具備經典理論價值</td>
+                  <td>僅限 2 個行程；現代多核心 CPU 會因指令重排（Instruction Reordering）導致互斥破功（需記憶體屏障）</td>
+                </tr>
+                <tr>
+                  <td><strong>硬體原子指令<br/>(test_and_set / CAS)</strong></td>
+                  <td>硬體層級保證不可分割（Indivisible），如 <code>compare_and_swap</code></td>
+                  <td>是（通常作為底層建構自旋鎖之基石）</td>
+                  <td>多處理器多核心支援，執行速度極快，為現代作業系統無鎖資料結構基礎</td>
+                  <td>單純迴圈使用無法保證有限等待，可能引發特定行程飢餓；需搭配等待陣列演算法</td>
+                </tr>
+                <tr>
+                  <td><strong>自旋鎖<br/>(Spinlock)</strong></td>
+                  <td>以原子指令實作的互斥鎖，獲取失敗時在 CPU 上自旋空轉</td>
+                  <td>是</td>
+                  <td><strong>多核心環境且臨界區極短時效能極高</strong>（免除耗時的 Context Switch 開銷）</td>
+                  <td>單處理器系統完全浪費 CPU 運算資源；若持有者被搶占會導致全體嚴重延遲</td>
+                </tr>
+                <tr>
+                  <td><strong>號誌<br/>(Semaphore: Counting / Binary)</strong></td>
+                  <td>整數變數，僅能透過原子操作 <code>wait()</code> (P) 與 <code>signal()</code> (V) 存取</td>
+                  <td>可無忙碌等待（採用阻塞等待佇列 Block / Sleep & Wakeup）</td>
+                  <td>功能極為強大，可同步協調多個資源實例，並能精確控制行程執行前後順序</td>
+                  <td>程式設計師若寫錯 PV 順序（如先 wait(mutex) 後 wait(empty)）將引發<strong>不可逆之全域死結</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>管程<br/>(Monitor & Condition Variables)</strong></td>
+                  <td>高階程式語言同步抽象，由編譯器保證任何時間最多僅允許一個行程在管程內活動</td>
+                  <td>否（以條件變數 <code>x.wait()</code> 與 <code>x.signal()</code> 阻塞等待）</td>
+                  <td><strong>編譯器層級自動保證互斥</strong>，大幅降低手動呼叫錯誤導致的死結風險</td>
+                  <td>需高階語言與編譯器支援（如 Java synchronized）；條件變數 signal 需區分 Hoare 與 Mesa 語意</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 期末考點二：記憶體分頁、TLB 命中率與有效存取時間 (EAT) 公式精準拆解 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <span>期末考點二：記憶體分頁架構、TLB 命中與有效存取時間（EAT）計算公式</span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.2); color: var(--accent-cyan);">計算大題必考</span>
+          </div>
+          <div class="alert-box">
+            <strong>有效存取時間 (Effective Access Time, EAT) 標準公式：</strong>
+            <div style="font-size: 1.05rem; margin: 0.5rem 0; font-family: 'Courier New', monospace; color: #38bdf8;">
+              $$\text{EAT} = \alpha \times (t_{\text{TLB}} + t_{\text{mem}}) + (1 - \alpha) \times (t_{\text{TLB}} + (n + 1) \times t_{\text{mem}})$$
+            </div>
+            （其中 $\alpha$ 為 TLB 命中率，$t_{\text{TLB}}$ 為 TLB 關聯查詢時間，$t_{\text{mem}}$ 為主記憶體存取時間，$n$ 為分頁層級數，如單階分頁 $n=1$，兩階分頁 $n=2$）。
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>分頁系統層級</th>
+                  <th>TLB 命中耗時 (Hit Time)</th>
+                  <th>TLB 未命中耗時 (Miss Time)</th>
+                  <th>EAT 計算實例 (設 $\alpha=90\%$, $t_{\text{TLB}}=20\text{ns}$, $t_{\text{mem}}=100\text{ns}$)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>單階分頁<br/>(One-Level Paging)</strong></td>
+                  <td>$t_{\text{TLB}} + t_{\text{mem}}$<br/>$= 20 + 100 = 120\,\text{ns}$</td>
+                  <td>$t_{\text{TLB}} + 2 \times t_{\text{mem}}$（查頁表 1 次 + 取資料 1 次）<br/>$= 20 + 200 = 220\,\text{ns}$</td>
+                  <td>$$\text{EAT} = 0.9 \times 120 + 0.1 \times 220 = 108 + 22 = \mathbf{130\,\text{ns}}$$</td>
+                </tr>
+                <tr>
+                  <td><strong>兩階分頁<br/>(Two-Level Paging)</strong></td>
+                  <td>$t_{\text{TLB}} + t_{\text{mem}}$<br/>$= 20 + 100 = 120\,\text{ns}$</td>
+                  <td>$t_{\text{TLB}} + 3 \times t_{\text{mem}}$（外層頁表 + 內層頁表 + 資料）<br/>$= 20 + 300 = 320\,\text{ns}$</td>
+                  <td>$$\text{EAT} = 0.9 \times 120 + 0.1 \times 320 = 108 + 32 = \mathbf{140\,\text{ns}}$$</td>
+                </tr>
+                <tr>
+                  <td><strong>四階分頁<br/>(64 位元常見)</strong></td>
+                  <td>$t_{\text{TLB}} + t_{\text{mem}}$<br/>$= 20 + 100 = 120\,\text{ns}$</td>
+                  <td>$t_{\text{TLB}} + 5 \times t_{\text{mem}}$（4 層頁表查詢 + 取資料 1 次）<br/>$= 20 + 500 = 520\,\text{ns}$</td>
+                  <td>$$\text{EAT} = 0.9 \times 120 + 0.1 \times 520 = 108 + 52 = \mathbf{160\,\text{ns}}$$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 期末考點三：虛擬記憶體頁面置換演算法橫向全覽與顛簸 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <span>期末考點三：虛擬記憶體頁面置換演算法橫向對比（Page Replacement & Thrashing）</span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.2); color: var(--accent-cyan);">觀念推導必考</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th style="min-width: 140px;">演算法名稱</th>
+                  <th style="min-width: 200px;">置換決策準則</th>
+                  <th style="min-width: 140px;">貝拉迪異常 (Belady's Anomaly)</th>
+                  <th style="min-width: 150px;">硬體實作支援需求</th>
+                  <th style="min-width: 180px;">實務評價與系統地位</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>FIFO<br/>(先進先出)</strong></td>
+                  <td>驅逐在記憶體中駐留時間最長（最早載入）的頁面</td>
+                  <td><strong style="color: var(--accent-rose);">會發生</strong>（增加頁框數缺頁反而增加）</td>
+                  <td>僅需簡易 FIFO 佇列指標</td>
+                  <td>實作極簡單，但經常驅逐高頻常用頁面，效能較差</td>
+                </tr>
+                <tr>
+                  <td><strong>Optimal (OPT)<br/>(最佳置換演算法)</strong></td>
+                  <td>驅逐在未來最長一段時間內不會被存取的頁面</td>
+                  <td><strong style="color: var(--accent-emerald);">絕不發生</strong>（屬於堆疊演算法）</td>
+                  <td>無法實作（需預知未來的先驗知識）</td>
+                  <td>具備理論上最低的缺頁次數，作為評估其他置換演算法的理論黃金標準（Benchmark）</td>
+                </tr>
+                <tr>
+                  <td><strong>LRU<br/>(最近最少使用)</strong></td>
+                  <td>以過去推測未來，驅逐過去最久未被存取的頁面</td>
+                  <td><strong style="color: var(--accent-emerald);">絕不發生</strong>（子集包含性 $B(t, n) \subseteq B(t, n+1)$）</td>
+                  <td>需要計數器（Counter）或雙向鏈結堆疊（Stack）硬體支援</td>
+                  <td>效能最接近 Optimal，但每次記憶體存取均需更新硬體狀態，純硬體 LRU 代價高昂</td>
+                </tr>
+                <tr>
+                  <td><strong>Second-Chance / Clock<br/>(時鐘 / 第二次機會)</strong></td>
+                  <td>基於 FIFO 順序，指針環形掃描；若參照位元為 1 則清為 0（給第二次機會），為 0 則驅逐</td>
+                  <td><strong style="color: var(--accent-rose);">會發生</strong>（本質為 FIFO 衍生）</td>
+                  <td>僅需 1 位元參照位元（Reference Bit）</td>
+                  <td>軟體近似 LRU 的最高性價比實作，被廣泛應用於主流作業系統核心</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert-box warning" style="margin-top: 1rem;">
+            <strong>系統顛簸（Thrashing）核心總結：</strong> 當多道程式設計程度過高，導致行程配置的頁框數低於其工作集（Working Set）需求時，行程頻繁缺頁，CPU 時間全部消耗在磁碟換頁（I/O 等待），CPU 利用率驟降！排程器誤判而載入更多行程，引發惡性循環。<strong>根本解法為降低多道程式設計程度（掛起部分行程 Swap-out）</strong>。
+          </div>
+        </div>
+
+        <!-- 期末考點四：次級儲存磁碟排程演算法特性與尋道計算比較 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <span>期末考點四：次級儲存磁碟排程演算法特性與尋道距離對照（Disk Scheduling）</span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.2); color: var(--accent-cyan);">尋道計算必考</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th style="min-width: 130px;">排程演算法</th>
+                  <th style="min-width: 220px;">磁頭移動與服務機制</th>
+                  <th style="min-width: 140px;">飢餓風險 (Starvation)</th>
+                  <th style="min-width: 200px;">總移動柱距特性</th>
+                  <th style="min-width: 180px;">公平性與等待時間分佈</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>FCFS</strong></td>
+                  <td>依請求進入佇列之先後順序依序處理</td>
+                  <td>無飢餓</td>
+                  <td>磁頭可能在兩極端磁柱來回大幅擺盪，總柱距通常最長</td>
+                  <td>絕對公平，但平均等待時間高</td>
+                </tr>
+                <tr>
+                  <td><strong>SSTF</strong></td>
+                  <td>每次挑選距離當前磁頭位置最近的磁柱請求服務</td>
+                  <td><strong style="color: var(--accent-rose);">有飢餓風險</strong>（兩端請求可能長期等待）</td>
+                  <td>總尋道距離通常顯著少於 FCFS</td>
+                  <td>局部效率高，但對兩側遠端請求極不公平</td>
+                </tr>
+                <tr>
+                  <td><strong>SCAN (電梯)</strong></td>
+                  <td>磁頭沿單一方向服務至實體極限端點（0 或 199），再反轉折返服務</td>
+                  <td>無飢餓</td>
+                  <td>柱距短且平穩（包含推進至端點的距離）</td>
+                  <td>兩端請求的平均等待時間較中間磁柱略長</td>
+                </tr>
+                <tr>
+                  <td><strong>C-SCAN (循環電梯)</strong></td>
+                  <td>磁頭沿單一方向服務至端點，隨後<strong>瞬間返回起點端點</strong>重新同向掃描</td>
+                  <td>無飢餓</td>
+                  <td>回程不服務請求，總柱距稍長於 SCAN</td>
+                  <td><strong>提供全磁碟最均勻一致的等待時間分佈</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>LOOK / C-LOOK</strong></td>
+                  <td>SCAN 與 C-SCAN 的改進：磁頭僅推進至<strong>該方向最後一個請求磁柱</strong>即折返或返回</td>
+                  <td>無飢餓</td>
+                  <td>免除前往實體邊緣極限（0 或 199）的浪費，柱距更加最佳化</td>
+                  <td>兼具高吞吐量與低額外尋道開銷</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 期末考點五：RAID 磁碟陣列等級架構完整矩陣對照 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <span>期末考點五：RAID 磁碟陣列架構等級全維度深度對照（RAID Architecture Matrix）</span>
+            <span class="badge badge-tag" style="background: rgba(14, 165, 233, 0.2); color: var(--accent-cyan);">架構對比必考</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th style="min-width: 110px;">RAID 等級</th>
+                  <th style="min-width: 160px;">空間利用率公式 ($N$ 碟，單碟 $C$)</th>
+                  <th style="min-width: 140px;">最大容錯硬碟數</th>
+                  <th style="min-width: 150px;">隨機小寫入懲罰 (Write Penalty)</th>
+                  <th style="min-width: 220px;">資料佈局與同位碼機制</th>
+                  <th style="min-width: 160px;">典型應用情境</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>RAID 0</strong></td>
+                  <td>$N \times C$ (100%)</td>
+                  <td>0 顆 (無容錯)</td>
+                  <td>無懲罰 (單次 I/O)</td>
+                  <td>純資料區塊條帶化（Striping），平行分散讀寫，零同位校驗碼</td>
+                  <td>影片剪輯快取、高效能運算 (HPC)</td>
+                </tr>
+                <tr>
+                  <td><strong>RAID 1</strong></td>
+                  <td>$\frac{N}{2} \times C$ (50%)</td>
+                  <td>$N - 1$ 顆 (同組至多 1 顆)</td>
+                  <td>2 次寫入 (資料 + 鏡像)</td>
+                  <td>純鏡像複製（Mirroring），寫入兩份完整副本，讀取可平行負載分流</td>
+                  <td>作業系統開機碟、金融核心交易日誌</td>
+                </tr>
+                <tr>
+                  <td><strong>RAID 5</strong></td>
+                  <td>$(N - 1) \times C$ ($\frac{N-1}{N}$)</td>
+                  <td>1 顆硬碟</td>
+                  <td>4 次 I/O (讀舊資料+讀舊同位+寫新資料+寫新同位)</td>
+                  <td>區塊條帶化，XOR 同位檢查碼均勻循環分散於各碟，杜絕專用同位碟瓶頸</td>
+                  <td>通用檔案伺服器、虛擬化主機儲存池</td>
+                </tr>
+                <tr>
+                  <td><strong>RAID 6</strong></td>
+                  <td>$(N - 2) \times C$ ($\frac{N-2}{N}$)</td>
+                  <td>2 顆硬碟 (任意 2 顆)</td>
+                  <td>6 次 I/O (3 讀 + 3 寫)</td>
+                  <td>雙重獨立同位檢查碼（如 P+Q 或 Reed-Solomon），可抵抗陣列重建期間再壞一顆</td>
+                  <td>大容量 SATA 磁碟陣列、企業備份儲存</td>
+                </tr>
+                <tr>
+                  <td><strong>RAID 10 (1+0)</strong></td>
+                  <td>$\frac{N}{2} \times C$ (50%)</td>
+                  <td>每組鏡像各 1 顆 (至多 $N/2$ 顆)</td>
+                  <td>2 次寫入</td>
+                  <td>底層先建置 RAID 1 鏡像組，頂層再建置 RAID 0 條帶化。結合容錯與極速隨機寫入</td>
+                  <td>高效能關聯式資料庫 (OLTP) 首選</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 期中考高頻考點可摺疊存檔面板 -->
+      <div class="collapsible-scope-box" id="midterm-focal-collapse-box" style="margin-top: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(30, 41, 59, 0.4); overflow: hidden;">
+        <div class="collapsible-header" id="btn-toggle-midterm-focal" style="padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; background: rgba(51, 65, 85, 0.35); transition: background 0.2s;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-size: 1.1rem;">📁</span>
+            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-muted);">期中考高頻考點演練存檔（記憶體金字塔、三大排程器、死結矩陣、計算靶場）</span>
+            <span class="badge badge-tag" style="font-size: 0.75rem;">已結束存檔 · 可隨時展開查閱</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span id="midterm-focal-collapse-indicator" style="font-size: 0.85rem; color: var(--accent-cyan);">已摺疊收合（點擊展開） ▾</span>
+          </div>
+        </div>
+        <div class="collapsible-body" id="midterm-focal-collapse-body" style="display: none; padding: 1.25rem; border-top: 1px dashed var(--border-color);">
+          
 
       <!-- 記憶體階層圖模組 -->
       <div class="card">
@@ -964,7 +1376,11 @@
           <div class="calc-feedback" id="calc-feedback-cs"></div>
         </div>
       </div>
-    </section>
+    
+        </div>
+      </div>
+
+</section>
 
     <!-- Tab 3: 甘特圖與排程計算器 -->
     <section class="tab-content" id="tab-simulator">
@@ -1188,7 +1604,7 @@
     <section class="tab-content" id="tab-quiz">
       <div class="page-header">
         <div>
-          <h1 class="page-title">期中考反覆刷題庫</h1>
+          <h1 class="page-title">全方位反覆刷題庫</h1>
           <p class="page-subtitle">涵蓋單選題、情境推導題與觀念判斷題，作答即時反饋詳解並自動記錄錯題</p>
         </div>
         <div class="btn-group">
@@ -1199,9 +1615,15 @@
       <div class="quiz-filter-bar" style="flex-wrap: wrap; gap: 1rem; align-items: center;">
         <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-bottom: 0;">
           <label class="form-label" style="white-space: nowrap;">篩選章節：</label>
-          <select id="quiz-chapter-select" class="form-select" style="min-width: 240px;">
-            <option value="all">全章節期中考題庫（綜合模擬）</option>
+          <select id="quiz-chapter-select" class="form-select" style="min-width: 260px;">
+            <option value="all">全章節題庫（綜合模擬測驗）</option>
           </select>
+        </div>
+        <!-- 考試範圍切換膠囊 -->
+        <div class="filter-pill-group" id="quiz-scope-pills" style="margin-right: 0.5rem;">
+          <button class="filter-pill active" data-scope="final" id="pill-quiz-scope-final">🔥 期末考題庫 (<span id="count-quiz-scope-final">30</span>)</button>
+          <button class="filter-pill" data-scope="midterm" id="pill-quiz-scope-midterm">📁 期中考題庫 [已摺疊] (<span id="count-quiz-scope-midterm">86</span>)</button>
+          <button class="filter-pill" data-scope="all" id="pill-quiz-scope-all">全部題目 (<span id="count-quiz-total-all">116</span>)</button>
         </div>
         <div class="filter-pill-group" id="quiz-category-pills">
           <button class="filter-pill active" data-cat="all">全部題型 (<span id="count-quiz-all">0</span>)</button>
@@ -1218,7 +1640,7 @@
     <section class="tab-content" id="tab-essay">
       <div class="page-header">
         <div>
-          <h1 class="page-title">期中非選問答與推導庫</h1>
+          <h1 class="page-title">精選非選問答與推導庫</h1>
           <p class="page-subtitle">針對恐龍本分章習題與期中考高頻非選大題，提供破題關鍵思考、逐步公式演算推導與評分標準（Rubric）</p>
         </div>
         <div class="btn-group">
@@ -1229,9 +1651,15 @@
       <div class="quiz-filter-bar" style="flex-wrap: wrap; gap: 1rem; align-items: center;">
         <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-bottom: 0;">
           <label class="form-label" style="white-space: nowrap;">篩選章節：</label>
-          <select id="essay-chapter-select" class="form-select" style="min-width: 240px;">
-            <option value="all">全部章節 (CH1 ~ CH5)</option>
+          <select id="essay-chapter-select" class="form-select" style="min-width: 260px;">
+            <option value="all">全部章節 (CH1 ~ CH8)</option>
           </select>
+        </div>
+        <!-- 非選題範圍切換膠囊 -->
+        <div class="filter-pill-group" id="essay-scope-pills" style="margin-right: 0.5rem;">
+          <button class="filter-pill active" data-scope="final" id="pill-essay-scope-final">🔥 期末考精選大題 (<span id="count-essay-scope-final">7</span>)</button>
+          <button class="filter-pill" data-scope="midterm" id="pill-essay-scope-midterm">📁 期中考大題存檔 (<span id="count-essay-scope-midterm">16</span>)</button>
+          <button class="filter-pill" data-scope="all" id="pill-essay-scope-all">全部非選大題 (<span id="count-essay-total-all">23</span>)</button>
         </div>
 
         <div class="filter-pill-group" id="essay-category-pills">
@@ -1270,6 +1698,11 @@
         <div>
           <h1 class="page-title">主動回想抽認卡（Active Recall）</h1>
           <p class="page-subtitle">點擊卡片翻面檢視正解與直觀白話比喻，點擊按鈕標記熟練度</p>
+        </div>
+        <div class="filter-pill-group" id="fc-scope-pills">
+          <button class="filter-pill active" data-scope="final" id="pill-fc-scope-final">🔥 期末考核心卡片 (<span id="count-fc-scope-final">15</span>)</button>
+          <button class="filter-pill" data-scope="midterm" id="pill-fc-scope-midterm">📁 期中考卡片 (<span id="count-fc-scope-midterm">29</span>)</button>
+          <button class="filter-pill" data-scope="all" id="pill-fc-scope-all">全部卡片 (<span id="count-fc-scope-all">44</span>)</button>
         </div>
       </div>
 

@@ -1689,3 +1689,66 @@ body {
   border-color: var(--accent-rose) !important;
   box-shadow: 0 0 10px rgba(244, 63, 94, 0.35);
 }
+
+
+/* ============================================================
+ * 考試範圍控制與期中考摺疊面板樣式 (Scope & Collapsible)
+ * ============================================================ */
+.collapsible-scope-box {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.4);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.collapsible-scope-box:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.collapsible-header {
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: rgba(51, 65, 85, 0.25);
+  transition: background 0.2s ease;
+}
+
+.collapsible-header:hover {
+  background: rgba(51, 65, 85, 0.5);
+}
+
+.collapsible-header.expanded #midterm-collapse-indicator,
+.collapsible-header.expanded #midterm-focal-collapse-indicator {
+  color: var(--accent-cyan) !important;
+}
+
+.scope-btn-group .btn.active {
+  background: var(--accent-cyan);
+  color: #0f172a;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.exam-scope-badge-final {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.exam-scope-badge-midterm {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.78rem;
+}
+
